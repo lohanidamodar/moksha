@@ -7,6 +7,7 @@
 	import AssetLibrary from './AssetLibrary.svelte';
 	import ImageSelector from './ImageSelector.svelte';
 	import FontSelector from './FontSelector.svelte';
+	import TransformControls from './TransformControls.svelte';
 
 	let { generateThumbnail } = $props();
 
@@ -28,6 +29,8 @@
 			background: { ...editor.background },
 			texts: { ...editor.texts },
 			fonts: { ...editor.fonts },
+			transforms: structuredClone(editor.getTransforms(editor.layout)),
+			layoutTransforms: structuredClone(editor.layoutTransforms),
 			images: { ...editor.images },
 			thumbnail
 		};
@@ -75,6 +78,11 @@
 		<section class="section">
 			<h3 class="section-title">Background</h3>
 			<BackgroundPicker />
+		</section>
+
+		<section class="section">
+			<h3 class="section-title">Transform</h3>
+			<TransformControls />
 		</section>
 
 		{#if imageInputs.length > 0}

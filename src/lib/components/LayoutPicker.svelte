@@ -11,7 +11,7 @@
 		<button
 			class="layout-option"
 			class:selected={editor.layout === layout.id}
-			onclick={() => (editor.layout = layout.id)}
+			onclick={() => editor.layout = layout.id}
 		>
 			<span class="layout-label">{layout.label}</span>
 		</button>

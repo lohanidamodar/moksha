@@ -81,8 +81,10 @@ function render(ctx, config, baseW, baseH) {
 	// 2. Layout data
 	const ld = getLayoutData(config.layout, w, h);
 
-	// 3. Logo
-	drawLogo(ctx, config.images?.logo ?? null, ld.logo.x, ld.logo.y, ld.logo.size);
+	// 3. Logo (with transform)
+	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1 };
+	drawLogo(ctx, config.images?.logo ?? null,
+		ld.logo.x + (lt.x / 100) * w, ld.logo.y + (lt.y / 100) * h, ld.logo.size * lt.scale);
 
 	// 4. Headline
 	const headline = config.texts?.headline || '';
@@ -108,14 +110,15 @@ function render(ctx, config, baseW, baseH) {
 		});
 	}
 
-	// 6. Phone frame with optional screenshot
+	// 6. Phone frame with optional screenshot (with transform)
 	if (ld.phone && config.images?.screenshot) {
+		const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1 };
 		drawPhoneFrame(
 			ctx,
-			ld.phone.x,
-			ld.phone.y,
-			ld.phone.pw,
-			ld.phone.ph,
+			ld.phone.x + (pt.x / 100) * w,
+			ld.phone.y + (pt.y / 100) * h,
+			ld.phone.pw * pt.scale,
+			ld.phone.ph * pt.scale,
 			0,
 			false,
 			config.images.screenshot

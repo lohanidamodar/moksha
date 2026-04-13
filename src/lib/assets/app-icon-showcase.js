@@ -97,10 +97,11 @@ function render(ctx, config, baseW, baseH) {
 	// 1. Background
 	renderBackground(ctx, w, h, config.background);
 
-	// 2. Icon size — 50% of the smaller dimension
-	const iconSize = Math.min(w, h) * 0.5;
-	const cx = w / 2;
-	const cy = h / 2;
+	// 2. Icon size — 50% of the smaller dimension (with transform)
+	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1 };
+	const iconSize = Math.min(w, h) * 0.5 * lt.scale;
+	const cx = w / 2 + (lt.x / 100) * w;
+	const cy = h / 2 + (lt.y / 100) * h;
 
 	// For perspective-floor, shift icon up slightly
 	const yOffset = config.layout === 'perspective-floor' ? -iconSize * 0.1 : 0;

@@ -57,6 +57,7 @@
 			background: editor.background,
 			texts: { ...editor.texts },
 			fonts: { ...editor.fonts },
+			transforms: editor.getTransforms(editor.layout),
 			images: { ...editor.images }
 		};
 

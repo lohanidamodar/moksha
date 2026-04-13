@@ -87,13 +87,19 @@ export function renderScreenshotMockup(ctx, config, baseW, baseH) {
 	const p = layoutData.phone;
 	const t = layoutData.title;
 
-	// 3. Phone frame with screenshot
+	// 3. Apply phone transforms (offset as % of canvas, scale multiplier)
+	const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1 };
+	const phoneX = p.x + (pt.x / 100) * w;
+	const phoneY = p.y + (pt.y / 100) * h;
+	const phoneW = p.w * pt.scale;
+	const phoneH = p.h * pt.scale;
+
 	drawPhoneFrame(
 		ctx,
-		p.x,
-		p.y,
-		p.w,
-		p.h,
+		phoneX,
+		phoneY,
+		phoneW,
+		phoneH,
 		p.angle || 0,
 		p.perspective || false,
 		config.images?.screenshot ?? null
