@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bhadama — Screenshot Mockup Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f11;
+  --bg-surface: #1a1a1f;
+  --bg-card: #222228;
+  --border: #2e2e36;
+  --text-primary: #f0eff4;
+  --text-secondary: #9d9baa;
+  --accent: #f97316;
+  --accent-hover: #fb923c;
+  --green: #22c55e;
+  --green-hover: #16a34a;
+  --blue: #3b82f6;
+  --blue-hover: #2563eb;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --radius: 12px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font); background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px; border-bottom: 1px solid var(--border);
+  background: var(--bg-surface); position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.back-link {
+  display: flex; align-items: center; gap: 6px; color: var(--text-secondary);
+  text-decoration: none; font-size: 14px; padding: 6px 12px; border-radius: 8px; transition: all 150ms ease;
+}
+.back-link:hover { color: var(--text-primary); background: var(--bg-card); }
+.back-link svg { width: 16px; height: 16px; }
+.header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+.header-title span { color: var(--accent); }
+
+.header-actions { display: flex; gap: 10px; align-items: center; }
+
+.dl-btn {
+  display: flex; align-items: center; gap: 8px;
+  color: #fff; border: none; padding: 10px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms ease; font-family: var(--font);
+}
+.dl-btn:hover { transform: translateY(-1px); }
+.dl-btn:active { transform: translateY(0); }
+.dl-btn svg { width: 16px; height: 16px; }
+.dl-btn.android { background: var(--green); }
+.dl-btn.android:hover { background: var(--green-hover); }
+.dl-btn.ios { background: var(--blue); }
+.dl-btn.ios:hover { background: var(--blue-hover); }
+.dl-btn.all { background: var(--accent); }
+.dl-btn.all:hover { background: var(--accent-hover); }
+
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px; padding: 32px; max-width: 1600px; margin: 0 auto;
+}
+
+.card {
+  background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border);
+  overflow: hidden; transition: all 200ms ease;
+}
+.card:hover { border-color: #444; box-shadow: var(--shadow); transform: translateY(-2px); }
+
+.card-preview {
+  position: relative; overflow: hidden; cursor: pointer; border-bottom: 1px solid var(--border);
+}
+.card-preview canvas { width: 100%; display: block; }
+
+.card-info { padding: 16px; }
+.card-layout-tag {
+  display: inline-block; background: rgba(249,115,22,0.15); color: var(--accent);
+  font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+  margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+.text-fields { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.text-field {
+  width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 6px; padding: 7px 10px; color: var(--text-primary); font-family: var(--font);
+  font-size: 13px; outline: none; transition: border-color 150ms ease; resize: none;
+}
+.text-field:focus { border-color: var(--accent); background: rgba(255,255,255,0.07); }
+.text-field::placeholder { color: var(--text-secondary); }
+.field-label { font-size: 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+
+.card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all 150ms ease; border: 1px solid var(--border); font-family: var(--font);
+  min-width: 0; white-space: nowrap;
+}
+.btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+.btn-upload { background: transparent; color: var(--text-primary); }
+.btn-upload:hover { background: rgba(255,255,255,0.06); }
+.btn-android { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-android:hover { background: var(--green-hover); }
+.btn-ios { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-ios:hover { background: var(--blue-hover); }
+
+input[type="file"] { display: none; }
+
+.loading-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center;
+  z-index: 200; backdrop-filter: blur(4px);
+}
+.loading-overlay.active { display: flex; }
+.loading-box { background: var(--bg-card); border-radius: var(--radius); padding: 32px 48px; text-align: center; }
+.loading-box .spinner {
+  width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+}
+.loading-msg { font-size: 14px; color: var(--text-secondary); margin-top: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; padding: 16px; gap: 16px; }
+  .header { padding: 12px 16px; flex-wrap: wrap; gap: 12px; }
+  .header-actions { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <a href="/" class="back-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      Back
+    </a>
+    <div class="header-title"><span>Bhadama</span> — Screenshot Mockup Generator</div>
+  </div>
+  <div class="header-actions">
+    <button class="dl-btn android" onclick="downloadAllPlatform('android')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      All Android
+    </button>
+    <button class="dl-btn ios" onclick="downloadAllPlatform('ios')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      All iOS
+    </button>
+    <button class="dl-btn all" onclick="downloadAllBoth()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      All (Both)
+    </button>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div>Generating PNGs...</div>
+    <div class="loading-msg" id="loadingMsg"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Platform sizes
+// ============================================================
+const PLATFORMS = {
+  android: { w: 1080, h: 1920, label: 'Android' },  // Play Store
+  ios:     { w: 1290, h: 2796, label: 'iOS 6.7"' },  // App Store 6.7"
+};
+
+// Base design dimensions (we render at this then scale)
+const BASE_W = 1080;
+const BASE_H = 1920;
+
+const MOCKUPS = [
+  { id: 'find-rentals', titleEn: 'Find Rentals\nNear You', titleNe: 'नजिकैको भाडामा\nखोज्नुहोस्', layout: 'tilt-right', gradient: ['#ff6a00', '#ee0979'] },
+  { id: 'map-search', titleEn: 'Map-Based\nSearch', titleNe: 'नक्सामा\nखोज्नुहोस्', layout: 'left-title', gradient: ['#4facfe', '#6a11cb'] },
+  { id: 'detailed-listings', titleEn: 'Detailed\nListings', titleNe: 'विस्तृत\nविवरण', layout: 'float-up', gradient: ['#11998e', '#38ef7d'] },
+  { id: 'easy-communication', titleEn: 'Easy\nCommunication', titleNe: 'सजिलो\nसम्पर्क', layout: 'tilt-left', gradient: ['#f953c6', '#b91d73'] },
+  { id: 'save-favorites', titleEn: 'Save\nFavorites', titleNe: 'मनपर्ने सुरक्षित\nगर्नुहोस्', layout: 'right-title', gradient: ['#00b4db', '#0083b0'] },
+  { id: 'post-property', titleEn: 'Post Your\nProperty', titleNe: 'आफ्नो सम्पत्ति\nराख्नुहोस्', layout: 'bottom-emerge', gradient: ['#4e54c8', '#8f94fb'] },
+  { id: 'smart-filters', titleEn: 'Smart\nFilters', titleNe: 'स्मार्ट\nफिल्टर', layout: 'perspective', gradient: ['#f7971e', '#ffd200'] },
+  { id: 'secure-trusted', titleEn: 'Secure &\nTrusted', titleNe: 'सुरक्षित र\nविश्वसनीय', layout: 'hero-center', gradient: ['#0f2027', '#2c5364'] },
+];
+
+const uploadedImages = new Array(MOCKUPS.length).fill(null);
+
+// ============================================================
+// Layouts (designed at BASE_W x BASE_H, scaled at render time)
+// ============================================================
+function getLayout(layout) {
+  switch (layout) {
+    case 'tilt-right':
+      return { phone: { x: 540, y: 960, w: 620, h: 1240, angle: 12 }, title: { x: 80, y: 320, align: 'left' } };
+    case 'left-title':
+      return { phone: { x: 720, y: 1020, w: 580, h: 1160, angle: 0 }, title: { x: 80, y: 400, align: 'left' } };
+    case 'float-up':
+      return { phone: { x: 540, y: 1200, w: 640, h: 1280, angle: 0 }, title: { x: 540, y: 240, align: 'center' } };
+    case 'tilt-left':
+      return { phone: { x: 500, y: 960, w: 620, h: 1240, angle: -12 }, title: { x: 1000, y: 320, align: 'right' } };
+    case 'right-title':
+      return { phone: { x: 340, y: 1020, w: 580, h: 1160, angle: 0 }, title: { x: 1000, y: 400, align: 'right' } };
+    case 'bottom-emerge':
+      return { phone: { x: 540, y: 1360, w: 660, h: 1320, angle: 0 }, title: { x: 540, y: 200, align: 'center' } };
+    case 'perspective':
+      return { phone: { x: 540, y: 1000, w: 700, h: 1400, angle: 5, perspective: true }, title: { x: 80, y: 200, align: 'left' } };
+    case 'hero-center':
+      return { phone: { x: 540, y: 1040, w: 820, h: 1640, angle: 0 }, title: { x: 540, y: 160, align: 'center' } };
+    default:
+      return { phone: { x: 540, y: 960, w: 600, h: 1200, angle: 0 }, title: { x: 540, y: 300, align: 'center' } };
+  }
+}
+
+// ============================================================
+// Canvas Rendering
+// ============================================================
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function drawGradient(ctx, colors, cw, ch) {
+  const grd = ctx.createLinearGradient(0, 0, cw, ch);
+  grd.addColorStop(0, colors[0]);
+  grd.addColorStop(1, colors[1]);
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, cw, ch);
+
+  const rgrd = ctx.createRadialGradient(cw * 0.3, ch * 0.2, 100, cw * 0.5, ch * 0.5, ch * 0.8);
+  rgrd.addColorStop(0, 'rgba(255,255,255,0.08)');
+  rgrd.addColorStop(1, 'rgba(0,0,0,0.15)');
+  ctx.fillStyle = rgrd;
+  ctx.fillRect(0, 0, cw, ch);
+
+  ctx.globalAlpha = 0.06;
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(cw * 0.85, ch * 0.12, 300, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cw * 0.1, ch * 0.8, 250, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
+function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screenshotImg) {
+  const cr = 40, bt = 50, bb = 50, bs = 14, nw = 180, nh = 30;
+  ctx.save();
+  ctx.translate(x, y);
+  if (angle) ctx.rotate((angle * Math.PI) / 180);
+  if (hasPerspective) ctx.transform(1, 0.04, -0.02, 1, 0, 0);
+
+  const l = -w / 2, t = -h / 2;
+
+  // Shadow
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 60; ctx.shadowOffsetY = 20;
+  roundRect(ctx, l, t, w, h, cr); ctx.fillStyle = '#111'; ctx.fill();
+  ctx.restore();
+
+  // Body
+  const bg = ctx.createLinearGradient(l, t, l + w, t + h);
+  bg.addColorStop(0, '#2a2a2e'); bg.addColorStop(0.5, '#1a1a1e'); bg.addColorStop(1, '#111114');
+  roundRect(ctx, l, t, w, h, cr); ctx.fillStyle = bg; ctx.fill();
+  roundRect(ctx, l, t, w, h, cr); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 2; ctx.stroke();
+
+  // Screen
+  const sx = l + bs, sy = t + bt, sw = w - bs * 2, sh = h - bt - bb, sr = cr - 8;
+  ctx.save();
+  roundRect(ctx, sx, sy, sw, sh, sr); ctx.clip();
+  if (screenshotImg) {
+    const ia = screenshotImg.width / screenshotImg.height, sa = sw / sh;
+    let dw, dh, dx, dy;
+    if (ia > sa) { dh = sh; dw = sh * ia; dx = sx + (sw - dw) / 2; dy = sy; }
+    else { dw = sw; dh = sw / ia; dx = sx; dy = sy + (sh - dh) / 2; }
+    ctx.drawImage(screenshotImg, dx, dy, dw, dh);
+  } else {
+    const pg = ctx.createLinearGradient(sx, sy, sx, sy + sh);
+    pg.addColorStop(0, '#1e1e2e'); pg.addColorStop(1, '#0e0e1e');
+    ctx.fillStyle = pg; ctx.fillRect(sx, sy, sw, sh);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    const ix = sx + sw / 2, iy = sy + sh / 2 - 20;
+    ctx.beginPath(); ctx.moveTo(ix - 30, iy + 10); ctx.lineTo(ix + 30, iy + 10); ctx.lineTo(ix + 30, iy + 30); ctx.lineTo(ix - 30, iy + 30); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(ix, iy - 25); ctx.lineTo(ix - 20, iy); ctx.lineTo(ix + 20, iy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.font = '600 26px Inter, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Upload Screenshot', ix, iy + 70);
+  }
+  ctx.restore();
+
+  // Notch
+  const nx = -nw / 2, ny = t + bt - nh / 2 - 2;
+  roundRect(ctx, nx, ny, nw, nh, nh / 2); ctx.fillStyle = '#111114'; ctx.fill();
+  ctx.beginPath(); ctx.arc(nx + nw - 35, ny + nh / 2, 7, 0, Math.PI * 2); ctx.fillStyle = '#1a1a22'; ctx.fill();
+  ctx.beginPath(); ctx.arc(nx + nw - 35, ny + nh / 2, 4, 0, Math.PI * 2); ctx.fillStyle = '#0d2137'; ctx.fill();
+
+  // Home bar
+  roundRect(ctx, -70, t + h - bb / 2 - 2, 140, 5, 2.5); ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fill();
+  ctx.restore();
+}
+
+function drawTitles(ctx, titleEn, titleNe, cfg) {
+  ctx.textAlign = cfg.align;
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 4;
+  ctx.fillStyle = '#ffffff'; ctx.font = '800 72px Inter, sans-serif';
+  let ly = cfg.y;
+  for (const line of titleEn.split('\n')) { ctx.fillText(line, cfg.x, ly); ly += 84; }
+  ctx.font = '600 44px Inter, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.8)'; ly += 16;
+  for (const line of titleNe.split('\n')) { ctx.fillText(line, cfg.x, ly); ly += 54; }
+  ctx.restore();
+}
+
+function drawWatermark(ctx, cw, ch) {
+  ctx.save(); ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '700 32px Inter, sans-serif'; ctx.fillText('bhadama', cw / 2, ch - 50); ctx.restore();
+}
+
+// Render to a specific canvas at given target dimensions
+function renderToCanvas(canvas, index, targetW, targetH) {
+  const mockup = MOCKUPS[index];
+  const ctx = canvas.getContext('2d');
+  canvas.width = targetW;
+  canvas.height = targetH;
+
+  const sx = targetW / BASE_W, sy = targetH / BASE_H;
+  ctx.save();
+  ctx.scale(sx, sy);
+
+  const layout = getLayout(mockup.layout);
+  drawGradient(ctx, mockup.gradient, BASE_W, BASE_H);
+  const p = layout.phone;
+  drawPhoneFrame(ctx, p.x, p.y, p.w, p.h, p.angle || 0, p.perspective || false, uploadedImages[index]);
+  drawTitles(ctx, mockup.titleEn, mockup.titleNe, layout.title);
+  drawWatermark(ctx, BASE_W, BASE_H);
+
+  ctx.restore();
+}
+
+// Preview render (always at base size for the visible canvas)
+function renderPreview(index) {
+  const canvas = document.getElementById(`canvas-${index}`);
+  if (!canvas) return;
+  renderToCanvas(canvas, index, BASE_W, BASE_H);
+}
+
+// ============================================================
+// UI
+// ============================================================
+const SVG_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+const SVG_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+
+function buildCards() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  MOCKUPS.forEach((m, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-preview" onclick="document.getElementById('upload-${i}').click()" title="Click to upload screenshot">
+        <canvas id="canvas-${i}"></canvas>
+      </div>
+      <div class="card-info">
+        <div class="card-layout-tag">${m.layout}</div>
+        <div class="text-fields">
+          <div>
+            <div class="field-label">English Title</div>
+            <textarea class="text-field" id="en-${i}" rows="2" placeholder="English title...">${m.titleEn}</textarea>
+          </div>
+          <div>
+            <div class="field-label">Nepali Title</div>
+            <textarea class="text-field" id="ne-${i}" rows="2" placeholder="Nepali title...">${m.titleNe}</textarea>
+          </div>
+        </div>
+        <div class="card-actions">
+          <input type="file" id="upload-${i}" accept="image/*" onchange="handleUpload(${i}, this)">
+          <button class="btn btn-upload" onclick="document.getElementById('upload-${i}').click()">${SVG_UP} Upload</button>
+          <button class="btn btn-android" onclick="downloadOne(${i},'android')">${SVG_DL} Android</button>
+          <button class="btn btn-ios" onclick="downloadOne(${i},'ios')">${SVG_DL} iOS</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+
+    // Live text editing
+    document.getElementById(`en-${i}`).addEventListener('input', (e) => { m.titleEn = e.target.value; renderPreview(i); });
+    document.getElementById(`ne-${i}`).addEventListener('input', (e) => { m.titleNe = e.target.value; renderPreview(i); });
+  });
+  MOCKUPS.forEach((_, i) => renderPreview(i));
+}
+
+function handleUpload(index, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => { uploadedImages[index] = img; renderPreview(index); };
+  img.src = URL.createObjectURL(file);
+}
+
+// ============================================================
+// Downloads
+// ============================================================
+function downloadOne(index, platform) {
+  const p = PLATFORMS[platform];
+  const offscreen = document.createElement('canvas');
+  renderToCanvas(offscreen, index, p.w, p.h);
+  const link = document.createElement('a');
+  link.download = `${platform}-${MOCKUPS[index].id}.png`;
+  link.href = offscreen.toDataURL('image/png');
+  link.click();
+}
+
+async function downloadAllPlatform(platform) {
+  const overlay = document.getElementById('loadingOverlay');
+  const msg = document.getElementById('loadingMsg');
+  overlay.classList.add('active');
+  const p = PLATFORMS[platform];
+  for (let i = 0; i < MOCKUPS.length; i++) {
+    msg.textContent = `${p.label} ${i + 1}/${MOCKUPS.length}...`;
+    await new Promise(r => setTimeout(r, 50));
+    const offscreen = document.createElement('canvas');
+    renderToCanvas(offscreen, i, p.w, p.h);
+    const link = document.createElement('a');
+    link.download = `${platform}-${MOCKUPS[i].id}.png`;
+    link.href = offscreen.toDataURL('image/png');
+    link.click();
+    await new Promise(r => setTimeout(r, 350));
+  }
+  overlay.classList.remove('active');
+}
+
+async function downloadAllBoth() {
+  const overlay = document.getElementById('loadingOverlay');
+  const msg = document.getElementById('loadingMsg');
+  overlay.classList.add('active');
+  const total = MOCKUPS.length * 2;
+  let count = 0;
+  for (const platform of ['android', 'ios']) {
+    const p = PLATFORMS[platform];
+    for (let i = 0; i < MOCKUPS.length; i++) {
+      count++;
+      msg.textContent = `${p.label} ${i + 1}/${MOCKUPS.length} (${count}/${total})`;
+      await new Promise(r => setTimeout(r, 50));
+      const offscreen = document.createElement('canvas');
+      renderToCanvas(offscreen, i, p.w, p.h);
+      const link = document.createElement('a');
+      link.download = `${platform}-${MOCKUPS[i].id}.png`;
+      link.href = offscreen.toDataURL('image/png');
+      link.click();
+      await new Promise(r => setTimeout(r, 350));
+    }
+  }
+  overlay.classList.remove('active');
+}
+
+document.addEventListener('DOMContentLoaded', buildCards);
+</script>
+</body>
+</html>

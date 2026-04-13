@@ -1,0 +1,131 @@
+/**
+ * Feature Graphic — Play Store 1024x500 banner with logo, tagline, and subtitle.
+ */
+import { renderBackground } from '$lib/renderer/backgrounds.js';
+import { drawText } from '$lib/renderer/canvas.js';
+
+/**
+ * Returns positioning data for each layout.
+ * Coordinates are in fractions of baseW/baseH for scaling.
+ */
+function getLayoutData(layout, w, h) {
+	switch (layout) {
+		case 'logo-left':
+			return {
+				logo: { x: w * 0.18, y: h * 0.5, size: h * 0.45 },
+				tagline: { x: w * 0.42, y: h * 0.38, align: 'left' },
+				subtitle: { x: w * 0.42, y: h * 0.62, align: 'left' }
+			};
+		case 'logo-center':
+			return {
+				logo: { x: w * 0.5, y: h * 0.35, size: h * 0.35 },
+				tagline: { x: w * 0.5, y: h * 0.7, align: 'center' },
+				subtitle: { x: w * 0.5, y: h * 0.86, align: 'center' }
+			};
+		case 'logo-right':
+			return {
+				logo: { x: w * 0.82, y: h * 0.5, size: h * 0.45 },
+				tagline: { x: w * 0.58, y: h * 0.38, align: 'right' },
+				subtitle: { x: w * 0.58, y: h * 0.62, align: 'right' }
+			};
+		case 'split-half':
+			return {
+				logo: { x: w * 0.25, y: h * 0.5, size: h * 0.5 },
+				tagline: { x: w * 0.65, y: h * 0.4, align: 'center' },
+				subtitle: { x: w * 0.65, y: h * 0.62, align: 'center' }
+			};
+		default:
+			return {
+				logo: { x: w * 0.5, y: h * 0.35, size: h * 0.35 },
+				tagline: { x: w * 0.5, y: h * 0.7, align: 'center' },
+				subtitle: { x: w * 0.5, y: h * 0.86, align: 'center' }
+			};
+	}
+}
+
+/**
+ * Draws a logo image centered at (cx, cy) with the given size.
+ */
+function drawLogo(ctx, img, cx, cy, size) {
+	if (!img) return;
+	const aspect = img.width / img.height;
+	let dw, dh;
+	if (aspect >= 1) {
+		dw = size;
+		dh = size / aspect;
+	} else {
+		dh = size;
+		dw = size * aspect;
+	}
+	ctx.save();
+	ctx.shadowColor = 'rgba(0,0,0,0.3)';
+	ctx.shadowBlur = 20;
+	ctx.shadowOffsetY = 6;
+	ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
+	ctx.restore();
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {object} config
+ * @param {number} baseW
+ * @param {number} baseH
+ */
+function render(ctx, config, baseW, baseH) {
+	const w = baseW;
+	const h = baseH;
+
+	// 1. Background
+	renderBackground(ctx, w, h, config.background);
+
+	// 2. Layout data
+	const ld = getLayoutData(config.layout, w, h);
+
+	// 3. Logo
+	drawLogo(ctx, config.images?.logo ?? null, ld.logo.x, ld.logo.y, ld.logo.size);
+
+	// 4. Tagline
+	const tagline = config.texts?.tagline || '';
+	if (tagline) {
+		const fontSize = Math.round(h * 0.1);
+		drawText(ctx, tagline, ld.tagline.x, ld.tagline.y, {
+			font: `800 ${fontSize}px Inter, sans-serif`,
+			color: '#ffffff',
+			align: ld.tagline.align,
+			shadow: { color: 'rgba(0,0,0,0.4)', blur: 16, offsetY: 3 }
+		});
+	}
+
+	// 5. Subtitle
+	const subtitle = config.texts?.subtitle || '';
+	if (subtitle) {
+		const fontSize = Math.round(h * 0.06);
+		drawText(ctx, subtitle, ld.subtitle.x, ld.subtitle.y, {
+			font: `600 ${fontSize}px Inter, sans-serif`,
+			color: 'rgba(255,255,255,0.8)',
+			align: ld.subtitle.align,
+			shadow: { color: 'rgba(0,0,0,0.3)', blur: 12, offsetY: 2 }
+		});
+	}
+}
+
+export default {
+	id: 'feature-graphic',
+	label: 'Feature Graphic',
+	icon: '\ud83c\udfa8',
+	sizes: [
+		{ id: 'play-store', label: 'Play Store (1024x500)', w: 1024, h: 500, platform: 'android' }
+	],
+	inputs: [
+		{ id: 'logo', type: 'image', label: 'Logo', placeholder: 'Upload your app logo' },
+		{ id: 'tagline', type: 'text', label: 'Tagline', placeholder: 'Your catchy tagline' },
+		{ id: 'subtitle', type: 'text', label: 'Subtitle', placeholder: 'A short description' }
+	],
+	layouts: [
+		{ id: 'logo-left', label: 'Logo Left' },
+		{ id: 'logo-center', label: 'Logo Center' },
+		{ id: 'logo-right', label: 'Logo Right' },
+		{ id: 'split-half', label: 'Split Half' }
+	],
+	render
+};
