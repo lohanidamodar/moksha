@@ -44,7 +44,7 @@ function getLayoutData(layout, w, h) {
 /**
  * Draw logo centered at (cx, cy).
  */
-function drawLogo(ctx, img, cx, cy, size) {
+function drawLogo(ctx, img, cx, cy, size, rotation = 0) {
 	if (!img) return;
 	const aspect = img.width / img.height;
 	let dw, dh;
@@ -56,6 +56,11 @@ function drawLogo(ctx, img, cx, cy, size) {
 		dw = size * aspect;
 	}
 	ctx.save();
+	if (rotation) {
+		ctx.translate(cx, cy);
+		ctx.rotate((rotation * Math.PI) / 180);
+		ctx.translate(-cx, -cy);
+	}
 	ctx.shadowColor = 'rgba(0,0,0,0.3)';
 	ctx.shadowBlur = 16;
 	ctx.shadowOffsetY = 4;
@@ -82,9 +87,9 @@ function render(ctx, config, baseW, baseH) {
 	const ld = getLayoutData(config.layout, w, h);
 
 	// 3. Logo (with transform)
-	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1 };
+	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1, rotation: 0 };
 	drawLogo(ctx, config.images?.logo ?? null,
-		ld.logo.x + (lt.x / 100) * w, ld.logo.y + (lt.y / 100) * h, ld.logo.size * lt.scale);
+		ld.logo.x + (lt.x / 100) * w, ld.logo.y + (lt.y / 100) * h, ld.logo.size * lt.scale, lt.rotation || 0);
 
 	// 4. Headline
 	const headline = config.texts?.headline || '';

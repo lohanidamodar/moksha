@@ -1,6 +1,8 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
 	import { getAssetType } from '$lib/assets/index.js';
+	import { getDefaultPhoneAngle } from '$lib/assets/layout-angles.js';
+	import { customLayouts } from '$lib/stores/customLayouts.svelte.js';
 
 	let module = $derived(getAssetType(editor.assetType));
 	let inputs = $derived(module?.inputs ?? []);
@@ -8,6 +10,19 @@
 	let hasLogo = $derived(inputs.some((i) => i.id === 'logo' || i.id === 'icon'));
 
 	let t = $derived(editor.getTransforms(editor.layout));
+
+	// Resolve the base layout id for angle lookup (custom layouts point to a base)
+	let baseLayoutId = $derived.by(() => {
+		const id = editor.layout;
+		if (id.startsWith('custom_')) {
+			return customLayouts.getById(id)?.baseLayout ?? id;
+		}
+		return id;
+	});
+
+	let defaultPhoneAngle = $derived(getDefaultPhoneAngle(baseLayoutId));
+	let effectivePhoneRotation = $derived(t.phone.rotation != null ? t.phone.rotation : defaultPhoneAngle);
+	let effectiveLogoRotation = $derived(t.logo.rotation != null ? t.logo.rotation : 0);
 </script>
 
 <div class="transform-controls">
@@ -35,6 +50,13 @@
 					oninput={(e) => editor.setTransform('phone', 'scale', +e.target.value)} />
 				<span class="slider-value">{Math.round(t.phone.scale * 100)}%</span>
 			</div>
+			<div class="slider-row">
+				<span class="slider-label">Rotate</span>
+				<input type="range" class="slider" min="-45" max="45" step="1"
+					value={effectivePhoneRotation}
+					oninput={(e) => editor.setTransform('phone', 'rotation', +e.target.value)} />
+				<span class="slider-value">{effectivePhoneRotation}°</span>
+			</div>
 		</div>
 	{/if}
 
@@ -61,6 +83,13 @@
 					value={t.logo.scale}
 					oninput={(e) => editor.setTransform('logo', 'scale', +e.target.value)} />
 				<span class="slider-value">{Math.round(t.logo.scale * 100)}%</span>
+			</div>
+			<div class="slider-row">
+				<span class="slider-label">Rotate</span>
+				<input type="range" class="slider" min="-45" max="45" step="1"
+					value={effectiveLogoRotation}
+					oninput={(e) => editor.setTransform('logo', 'rotation', +e.target.value)} />
+				<span class="slider-value">{effectiveLogoRotation}°</span>
 			</div>
 		</div>
 	{/if}

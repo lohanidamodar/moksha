@@ -8,6 +8,7 @@
 	import ImageSelector from './ImageSelector.svelte';
 	import FontSelector from './FontSelector.svelte';
 	import TransformControls from './TransformControls.svelte';
+	import { resolveLayout } from '$lib/layoutResolver.js';
 
 	let { generateThumbnail } = $props();
 
@@ -21,15 +22,16 @@
 
 	function handleAddToQueue() {
 		const thumbnail = generateThumbnail?.() ?? null;
+		const resolved = resolveLayout(editor.layout, editor.getTransforms(editor.layout));
 
 		const config = {
 			assetType: editor.assetType,
 			sizeId: editor.sizeId,
-			layout: editor.layout,
+			layout: resolved.baseLayout,
 			background: { ...editor.background },
 			texts: { ...editor.texts },
 			fonts: { ...editor.fonts },
-			transforms: structuredClone(editor.getTransforms(editor.layout)),
+			transforms: structuredClone(resolved.transforms),
 			layoutTransforms: structuredClone(editor.layoutTransforms),
 			images: { ...editor.images },
 			thumbnail

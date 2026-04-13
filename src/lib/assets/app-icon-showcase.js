@@ -98,16 +98,26 @@ function render(ctx, config, baseW, baseH) {
 	renderBackground(ctx, w, h, config.background);
 
 	// 2. Icon size — 50% of the smaller dimension (with transform)
-	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1 };
+	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1, rotation: 0 };
 	const iconSize = Math.min(w, h) * 0.5 * lt.scale;
 	const cx = w / 2 + (lt.x / 100) * w;
 	const cy = h / 2 + (lt.y / 100) * h;
+	const iconRotation = lt.rotation || 0;
 
 	// For perspective-floor, shift icon up slightly
 	const yOffset = config.layout === 'perspective-floor' ? -iconSize * 0.1 : 0;
 
-	// 3. Draw icon with effects
+	// 3. Draw icon with effects (apply rotation)
+	if (iconRotation) {
+		ctx.save();
+		ctx.translate(cx, cy + yOffset);
+		ctx.rotate((iconRotation * Math.PI) / 180);
+		ctx.translate(-cx, -(cy + yOffset));
+	}
 	drawIcon(ctx, config.images?.icon ?? null, cx, cy + yOffset, iconSize, config.layout);
+	if (iconRotation) {
+		ctx.restore();
+	}
 }
 
 export default {

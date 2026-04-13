@@ -58,6 +58,16 @@ export function getLayout(layout, w, h) {
 				phone: { x: w * 0.5, y: h * 0.56, w: w * 0.72, h: w * 0.72 * 2, angle: 0 },
 				title: { x: w * 0.5, y: h * 0.09, align: 'center' }
 			};
+		case 'split-left':
+			return {
+				phone: { x: w, y: h * 0.52, w: w * 0.85, h: w * 0.85 * 2, angle: 0 },
+				title: { x: w * 0.08, y: h * 0.12, align: 'left' }
+			};
+		case 'split-right':
+			return {
+				phone: { x: 0, y: h * 0.52, w: w * 0.85, h: w * 0.85 * 2, angle: 0 },
+				title: { x: w * 0.92, y: h * 0.12, align: 'right' }
+			};
 		default:
 			return {
 				phone: { x: w * 0.5, y: h * 0.52, w: pw, h: ph, angle: 0 },
@@ -87,12 +97,13 @@ export function renderScreenshotMockup(ctx, config, baseW, baseH) {
 	const p = layoutData.phone;
 	const t = layoutData.title;
 
-	// 3. Apply phone transforms (offset as % of canvas, scale multiplier)
-	const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1 };
+	// 3. Apply phone transforms (offset as % of canvas, scale multiplier, rotation absolute)
+	const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1, rotation: null };
 	const phoneX = p.x + (pt.x / 100) * w;
 	const phoneY = p.y + (pt.y / 100) * h;
 	const phoneW = p.w * pt.scale;
 	const phoneH = p.h * pt.scale;
+	const phoneAngle = pt.rotation != null ? pt.rotation : (p.angle || 0);
 
 	drawPhoneFrame(
 		ctx,
@@ -100,7 +111,7 @@ export function renderScreenshotMockup(ctx, config, baseW, baseH) {
 		phoneY,
 		phoneW,
 		phoneH,
-		p.angle || 0,
+		phoneAngle,
 		p.perspective || false,
 		config.images?.screenshot ?? null
 	);
@@ -164,7 +175,9 @@ export default {
 		{ id: 'right-title', label: 'Right Title' },
 		{ id: 'bottom-emerge', label: 'Bottom Emerge' },
 		{ id: 'perspective', label: 'Perspective' },
-		{ id: 'hero-center', label: 'Hero Center' }
+		{ id: 'hero-center', label: 'Hero Center' },
+		{ id: 'split-left', label: 'Split Left' },
+		{ id: 'split-right', label: 'Split Right' }
 	],
 	render: renderScreenshotMockup
 };

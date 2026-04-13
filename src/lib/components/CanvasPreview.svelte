@@ -1,6 +1,7 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
 	import { getAssetType } from '$lib/assets/index.js';
+	import { resolveLayout } from '$lib/layoutResolver.js';
 
 	let canvas = $state(null);
 	let container = $state(null);
@@ -52,12 +53,13 @@
 		const ctx = canvas.getContext('2d');
 		ctx.clearRect(0, 0, renderSize.w, renderSize.h);
 
+		const resolved = resolveLayout(editor.layout, editor.getTransforms(editor.layout));
 		const config = {
-			layout: editor.layout,
+			layout: resolved.baseLayout,
 			background: editor.background,
 			texts: { ...editor.texts },
 			fonts: { ...editor.fonts },
-			transforms: editor.getTransforms(editor.layout),
+			transforms: resolved.transforms,
 			images: { ...editor.images }
 		};
 

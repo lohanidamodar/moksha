@@ -66,7 +66,7 @@ function getLayoutData(layout, w, h) {
 /**
  * Draws a logo image centered at (cx, cy) with the given size.
  */
-function drawLogo(ctx, img, cx, cy, size) {
+function drawLogo(ctx, img, cx, cy, size, rotation = 0) {
 	if (!img) return;
 	const aspect = img.width / img.height;
 	let dw, dh;
@@ -78,6 +78,11 @@ function drawLogo(ctx, img, cx, cy, size) {
 		dw = size * aspect;
 	}
 	ctx.save();
+	if (rotation) {
+		ctx.translate(cx, cy);
+		ctx.rotate((rotation * Math.PI) / 180);
+		ctx.translate(-cx, -cy);
+	}
 	ctx.shadowColor = 'rgba(0,0,0,0.3)';
 	ctx.shadowBlur = 20;
 	ctx.shadowOffsetY = 6;
@@ -104,11 +109,11 @@ function render(ctx, config, baseW, baseH) {
 	const ld = getLayoutData(config.layout, w, h);
 
 	// 3. Logo (with transform offsets)
-	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1 };
+	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1, rotation: 0 };
 	const logoX = ld.logo.x + (lt.x / 100) * w;
 	const logoY = ld.logo.y + (lt.y / 100) * h;
 	const logoSize = ld.logo.size * lt.scale;
-	drawLogo(ctx, config.images?.logo ?? null, logoX, logoY, logoSize);
+	drawLogo(ctx, config.images?.logo ?? null, logoX, logoY, logoSize, lt.rotation || 0);
 
 	// 4. Tagline
 	const tagline = config.texts?.tagline || '';
