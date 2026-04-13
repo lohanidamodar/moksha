@@ -17,6 +17,8 @@
 		"vite": "^8.0.7"
 	},
 	"dependencies": {
+		"@napi-rs/canvas": "^0.1.97",
+		"@sveltejs/adapter-node": "^5.5.4",
 		"file-saver": "^2.0.5",
 		"jszip": "^3.10.1"
 	}
