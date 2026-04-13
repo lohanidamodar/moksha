@@ -20,6 +20,10 @@
 	let textInputs = $derived(inputs.filter((i) => i.type !== 'image'));
 	let isEditing = $derived(!!editor.editingQueueId);
 
+	function deepCopy(obj) {
+		return JSON.parse(JSON.stringify(obj));
+	}
+
 	function handleAddToQueue() {
 		const thumbnail = generateThumbnail?.() ?? null;
 		const resolved = resolveLayout(editor.layout, editor.getTransforms(editor.layout));
@@ -28,11 +32,11 @@
 			assetType: editor.assetType,
 			sizeId: editor.sizeId,
 			layout: resolved.baseLayout,
-			background: { ...editor.background },
-			texts: { ...editor.texts },
-			fonts: { ...editor.fonts },
-			transforms: structuredClone(resolved.transforms),
-			layoutTransforms: structuredClone(editor.layoutTransforms),
+			background: deepCopy(editor.background),
+			texts: deepCopy(editor.texts),
+			fonts: deepCopy(editor.fonts),
+			transforms: deepCopy(resolved.transforms),
+			layoutTransforms: deepCopy(editor.layoutTransforms),
 			images: { ...editor.images },
 			thumbnail
 		};

@@ -6,9 +6,13 @@ class QueueState {
 		this.items.push({
 			id: `q_${Date.now()}`,
 			assetType: item.assetType,
+			sizeId: item.sizeId ?? null,
 			layout: item.layout,
 			background: { ...item.background },
 			texts: { ...item.texts },
+			fonts: item.fonts ? { ...item.fonts } : undefined,
+			transforms: item.transforms ?? undefined,
+			layoutTransforms: item.layoutTransforms ?? undefined,
 			images: { ...item.images },
 			thumbnail: item.thumbnail ?? null,
 			createdAt: new Date()
