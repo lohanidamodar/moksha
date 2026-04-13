@@ -72,6 +72,8 @@ function drawLogo(ctx, img, cx, cy, size) {
 function render(ctx, config, baseW, baseH) {
 	const w = baseW;
 	const h = baseH;
+	const titleFont = config.fonts?.title || 'Inter';
+	const subtitleFont = config.fonts?.subtitle || 'Inter';
 
 	// 1. Background
 	renderBackground(ctx, w, h, config.background);
@@ -87,7 +89,7 @@ function render(ctx, config, baseW, baseH) {
 	if (headline) {
 		const fontSize = Math.round(Math.min(w, h) * 0.09);
 		drawText(ctx, headline, ld.headline.x, ld.headline.y, {
-			font: `800 ${fontSize}px Inter, sans-serif`,
+			font: `800 ${fontSize}px "${titleFont}", sans-serif`,
 			color: '#ffffff',
 			align: ld.headline.align,
 			shadow: { color: 'rgba(0,0,0,0.4)', blur: 16, offsetY: 3 }
@@ -99,7 +101,7 @@ function render(ctx, config, baseW, baseH) {
 	if (subtitle) {
 		const fontSize = Math.round(Math.min(w, h) * 0.055);
 		drawText(ctx, subtitle, ld.subtitle.x, ld.subtitle.y, {
-			font: `600 ${fontSize}px Inter, sans-serif`,
+			font: `600 ${fontSize}px "${subtitleFont}", sans-serif`,
 			color: 'rgba(255,255,255,0.8)',
 			align: ld.subtitle.align,
 			shadow: { color: 'rgba(0,0,0,0.3)', blur: 12, offsetY: 2 }

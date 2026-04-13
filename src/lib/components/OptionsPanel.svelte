@@ -4,12 +4,18 @@
 	import { getAssetType } from '$lib/assets/index.js';
 	import LayoutPicker from './LayoutPicker.svelte';
 	import BackgroundPicker from './BackgroundPicker.svelte';
-	import ImageUpload from './ImageUpload.svelte';
+	import AssetLibrary from './AssetLibrary.svelte';
+	import ImageSelector from './ImageSelector.svelte';
+	import FontSelector from './FontSelector.svelte';
 
 	let { generateThumbnail } = $props();
 
 	let module = $derived(getAssetType(editor.assetType));
+	let sizes = $derived(module?.sizes ?? []);
+	let currentSizeId = $derived(editor.sizeId || sizes[0]?.id);
 	let inputs = $derived(module?.inputs ?? []);
+	let imageInputs = $derived(inputs.filter((i) => i.type === 'image'));
+	let textInputs = $derived(inputs.filter((i) => i.type !== 'image'));
 	let isEditing = $derived(!!editor.editingQueueId);
 
 	function handleAddToQueue() {
@@ -17,9 +23,11 @@
 
 		const config = {
 			assetType: editor.assetType,
+			sizeId: editor.sizeId,
 			layout: editor.layout,
 			background: { ...editor.background },
 			texts: { ...editor.texts },
+			fonts: { ...editor.fonts },
 			images: { ...editor.images },
 			thumbnail
 		};
@@ -40,6 +48,26 @@
 <aside class="options-panel">
 	<div class="panel-scroll">
 		<section class="section">
+			<h3 class="section-title">Assets</h3>
+			<AssetLibrary />
+		</section>
+
+		{#if sizes.length > 1}
+			<section class="section">
+				<h3 class="section-title">Format</h3>
+				<select
+					class="format-select"
+					value={currentSizeId}
+					onchange={(e) => editor.sizeId = e.target.value}
+				>
+					{#each sizes as size (size.id)}
+						<option value={size.id}>{size.label}</option>
+					{/each}
+				</select>
+			</section>
+		{/if}
+
+		<section class="section">
 			<h3 class="section-title">Layout</h3>
 			<LayoutPicker />
 		</section>
@@ -49,42 +77,66 @@
 			<BackgroundPicker />
 		</section>
 
-		<section class="section">
-			<h3 class="section-title">Content</h3>
-			<div class="inputs">
-				{#each inputs as input}
-					<div class="input-group">
-						<label class="input-label" for="input-{input.id}">{input.label}</label>
+		{#if imageInputs.length > 0}
+			<section class="section">
+				<h3 class="section-title">Images</h3>
+				<div class="inputs">
+					{#each imageInputs as input}
+						<div class="input-group">
+							<label class="input-label">{input.label}</label>
+							<ImageSelector inputId={input.id} />
+						</div>
+					{/each}
+				</div>
+			</section>
+		{/if}
 
-						{#if input.type === 'image'}
-							<ImageUpload
-								inputId={input.id}
-								label={input.label}
-								placeholder={input.placeholder}
-							/>
-						{:else if input.type === 'textarea'}
-							<textarea
-								id="input-{input.id}"
-								class="text-input textarea"
-								placeholder={input.placeholder}
-								value={editor.texts[input.id] ?? ''}
-								oninput={(e) => handleTextInput(input.id, e)}
-								rows="3"
-							></textarea>
-						{:else}
-							<input
-								id="input-{input.id}"
-								class="text-input"
-								type="text"
-								placeholder={input.placeholder}
-								value={editor.texts[input.id] ?? ''}
-								oninput={(e) => handleTextInput(input.id, e)}
-							/>
-						{/if}
-					</div>
-				{/each}
+		<section class="section">
+			<h3 class="section-title">Fonts</h3>
+			<div class="inputs">
+				<div class="input-group">
+					<label class="input-label">Title Font</label>
+					<FontSelector value={editor.fonts.title} onchange={(f) => editor.fonts.title = f} />
+				</div>
+				<div class="input-group">
+					<label class="input-label">Subtitle Font</label>
+					<FontSelector value={editor.fonts.subtitle} onchange={(f) => editor.fonts.subtitle = f} />
+				</div>
 			</div>
 		</section>
+
+		{#if textInputs.length > 0}
+			<section class="section">
+				<h3 class="section-title">Text</h3>
+				<div class="inputs">
+					{#each textInputs as input}
+						<div class="input-group">
+							<label class="input-label" for="input-{input.id}">{input.label}</label>
+
+							{#if input.type === 'textarea'}
+								<textarea
+									id="input-{input.id}"
+									class="text-input textarea"
+									placeholder={input.placeholder}
+									value={editor.texts[input.id] ?? ''}
+									oninput={(e) => handleTextInput(input.id, e)}
+									rows="3"
+								></textarea>
+							{:else}
+								<input
+									id="input-{input.id}"
+									class="text-input"
+									type="text"
+									placeholder={input.placeholder}
+									value={editor.texts[input.id] ?? ''}
+									oninput={(e) => handleTextInput(input.id, e)}
+								/>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			</section>
+		{/if}
 	</div>
 
 	<div class="panel-footer">
@@ -142,10 +194,42 @@
 		margin: 0;
 	}
 
+	.format-select {
+		width: 100%;
+		padding: 7px 10px;
+		border: 1px solid var(--border, #2e2e36);
+		border-radius: 7px;
+		background: var(--bg-card, #222228);
+		color: var(--text-primary, #f0eff4);
+		font-family: var(--font, 'Inter'), sans-serif;
+		font-size: 12px;
+		cursor: pointer;
+		outline: none;
+		transition: border-color 0.15s;
+		appearance: none;
+		background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239d9baa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+		background-repeat: no-repeat;
+		background-position: right 10px center;
+		padding-right: 30px;
+	}
+
+	.format-select:hover {
+		border-color: #444;
+	}
+
+	.format-select:focus {
+		border-color: var(--accent, #f97316);
+	}
+
+	.format-select option {
+		background: var(--bg-card, #222228);
+		color: var(--text-primary, #f0eff4);
+	}
+
 	.inputs {
 		display: flex;
 		flex-direction: column;
-		gap: 14px;
+		gap: 12px;
 	}
 
 	.input-group {

@@ -1,52 +1,26 @@
 <script>
-	import { queue } from '$lib/stores/queue.svelte.js';
-	import { exportZip } from '$lib/renderer/export.js';
 	import Header from './Header.svelte';
 	import CanvasPreview from './CanvasPreview.svelte';
 	import OptionsPanel from './OptionsPanel.svelte';
-	import QueuePanel from './QueuePanel.svelte';
+	import QueueStrip from './QueueStrip.svelte';
 
-	let queueOpen = $state(false);
 	let canvasPreview = $state(null);
-	let exporting = $state(false);
-
-	function toggleQueue() {
-		queueOpen = !queueOpen;
-	}
-
-	function closeQueue() {
-		queueOpen = false;
-	}
 
 	function generateThumbnail() {
 		return canvasPreview?.generateThumbnail() ?? null;
 	}
-
-	async function handleExport() {
-		if (queue.count === 0 || exporting) return;
-		exporting = true;
-
-		try {
-			await exportZip(queue.items);
-		} catch (err) {
-			console.error('Export failed:', err);
-		} finally {
-			exporting = false;
-		}
-	}
 </script>
 
 <div class="editor-shell">
-	<Header onToggleQueue={toggleQueue} {queueOpen} onExport={handleExport} />
+	<Header />
 
 	<div class="editor-body">
-		<CanvasPreview bind:this={canvasPreview} />
+		<div class="editor-left">
+			<CanvasPreview bind:this={canvasPreview} />
+			<QueueStrip />
+		</div>
 		<OptionsPanel {generateThumbnail} />
 	</div>
-
-	{#if queueOpen}
-		<QueuePanel onClose={closeQueue} />
-	{/if}
 </div>
 
 <style>
@@ -64,5 +38,12 @@
 		flex: 1;
 		min-height: 0;
 		overflow: hidden;
+	}
+
+	.editor-left {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
 	}
 </style>

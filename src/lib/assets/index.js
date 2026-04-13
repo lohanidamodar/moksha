@@ -3,7 +3,6 @@
  * Imports all asset modules and provides lookup helpers.
  */
 import screenshotMockup from '$lib/assets/screenshot-mockup.js';
-import appStorePreview from '$lib/assets/app-store-preview.js';
 import featureGraphic from '$lib/assets/feature-graphic.js';
 import promoBanner from '$lib/assets/promo-banner.js';
 import appIconShowcase from '$lib/assets/app-icon-showcase.js';
@@ -11,7 +10,6 @@ import socialCard from '$lib/assets/social-card.js';
 
 export const assetTypes = [
 	screenshotMockup,
-	appStorePreview,
 	featureGraphic,
 	promoBanner,
 	appIconShowcase,

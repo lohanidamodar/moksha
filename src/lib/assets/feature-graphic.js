@@ -2,6 +2,7 @@
  * Feature Graphic — Play Store 1024x500 banner with logo, tagline, and subtitle.
  */
 import { renderBackground } from '$lib/renderer/backgrounds.js';
+import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { drawText } from '$lib/renderer/canvas.js';
 
 /**
@@ -14,31 +15,50 @@ function getLayoutData(layout, w, h) {
 			return {
 				logo: { x: w * 0.18, y: h * 0.5, size: h * 0.45 },
 				tagline: { x: w * 0.42, y: h * 0.38, align: 'left' },
-				subtitle: { x: w * 0.42, y: h * 0.62, align: 'left' }
+				subtitle: { x: w * 0.42, y: h * 0.62, align: 'left' },
+				phone: null
 			};
 		case 'logo-center':
 			return {
 				logo: { x: w * 0.5, y: h * 0.35, size: h * 0.35 },
 				tagline: { x: w * 0.5, y: h * 0.7, align: 'center' },
-				subtitle: { x: w * 0.5, y: h * 0.86, align: 'center' }
+				subtitle: { x: w * 0.5, y: h * 0.86, align: 'center' },
+				phone: null
 			};
 		case 'logo-right':
 			return {
 				logo: { x: w * 0.82, y: h * 0.5, size: h * 0.45 },
 				tagline: { x: w * 0.58, y: h * 0.38, align: 'right' },
-				subtitle: { x: w * 0.58, y: h * 0.62, align: 'right' }
+				subtitle: { x: w * 0.58, y: h * 0.62, align: 'right' },
+				phone: null
 			};
 		case 'split-half':
 			return {
 				logo: { x: w * 0.25, y: h * 0.5, size: h * 0.5 },
 				tagline: { x: w * 0.65, y: h * 0.4, align: 'center' },
-				subtitle: { x: w * 0.65, y: h * 0.62, align: 'center' }
+				subtitle: { x: w * 0.65, y: h * 0.62, align: 'center' },
+				phone: null
+			};
+		case 'logo-phone':
+			return {
+				logo: { x: w * 0.08, y: h * 0.18, size: h * 0.16 },
+				tagline: { x: w * 0.08, y: h * 0.48, align: 'left' },
+				subtitle: { x: w * 0.08, y: h * 0.68, align: 'left' },
+				phone: { x: w * 0.78, y: h * 0.55, pw: w * 0.22, ph: h * 0.75 }
+			};
+		case 'phone-center':
+			return {
+				logo: { x: w * 0.12, y: h * 0.22, size: h * 0.2 },
+				tagline: { x: w * 0.12, y: h * 0.55, align: 'left' },
+				subtitle: { x: w * 0.12, y: h * 0.75, align: 'left' },
+				phone: { x: w * 0.65, y: h * 0.5, pw: w * 0.2, ph: h * 0.8 }
 			};
 		default:
 			return {
 				logo: { x: w * 0.5, y: h * 0.35, size: h * 0.35 },
 				tagline: { x: w * 0.5, y: h * 0.7, align: 'center' },
-				subtitle: { x: w * 0.5, y: h * 0.86, align: 'center' }
+				subtitle: { x: w * 0.5, y: h * 0.86, align: 'center' },
+				phone: null
 			};
 	}
 }
@@ -74,6 +94,8 @@ function drawLogo(ctx, img, cx, cy, size) {
 function render(ctx, config, baseW, baseH) {
 	const w = baseW;
 	const h = baseH;
+	const titleFont = config.fonts?.title || 'Inter';
+	const subtitleFont = config.fonts?.subtitle || 'Inter';
 
 	// 1. Background
 	renderBackground(ctx, w, h, config.background);
@@ -89,7 +111,7 @@ function render(ctx, config, baseW, baseH) {
 	if (tagline) {
 		const fontSize = Math.round(h * 0.1);
 		drawText(ctx, tagline, ld.tagline.x, ld.tagline.y, {
-			font: `800 ${fontSize}px Inter, sans-serif`,
+			font: `800 ${fontSize}px "${titleFont}", sans-serif`,
 			color: '#ffffff',
 			align: ld.tagline.align,
 			shadow: { color: 'rgba(0,0,0,0.4)', blur: 16, offsetY: 3 }
@@ -101,11 +123,25 @@ function render(ctx, config, baseW, baseH) {
 	if (subtitle) {
 		const fontSize = Math.round(h * 0.06);
 		drawText(ctx, subtitle, ld.subtitle.x, ld.subtitle.y, {
-			font: `600 ${fontSize}px Inter, sans-serif`,
+			font: `600 ${fontSize}px "${subtitleFont}", sans-serif`,
 			color: 'rgba(255,255,255,0.8)',
 			align: ld.subtitle.align,
 			shadow: { color: 'rgba(0,0,0,0.3)', blur: 12, offsetY: 2 }
 		});
+	}
+
+	// 6. Phone frame with optional screenshot
+	if (ld.phone && config.images?.screenshot) {
+		drawPhoneFrame(
+			ctx,
+			ld.phone.x,
+			ld.phone.y,
+			ld.phone.pw,
+			ld.phone.ph,
+			0,
+			false,
+			config.images.screenshot
+		);
 	}
 }
 
@@ -118,6 +154,7 @@ export default {
 	],
 	inputs: [
 		{ id: 'logo', type: 'image', label: 'Logo', placeholder: 'Upload your app logo' },
+		{ id: 'screenshot', type: 'image', label: 'Screenshot (optional)', placeholder: 'Upload a screenshot' },
 		{ id: 'tagline', type: 'text', label: 'Tagline', placeholder: 'Your catchy tagline' },
 		{ id: 'subtitle', type: 'text', label: 'Subtitle', placeholder: 'A short description' }
 	],
@@ -125,7 +162,9 @@ export default {
 		{ id: 'logo-left', label: 'Logo Left' },
 		{ id: 'logo-center', label: 'Logo Center' },
 		{ id: 'logo-right', label: 'Logo Right' },
-		{ id: 'split-half', label: 'Split Half' }
+		{ id: 'split-half', label: 'Split Half' },
+		{ id: 'logo-phone', label: 'Logo + Phone' },
+		{ id: 'phone-center', label: 'Phone Center' }
 	],
 	render
 };

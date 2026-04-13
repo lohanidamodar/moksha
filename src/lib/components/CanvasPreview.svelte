@@ -12,45 +12,55 @@
 
 	let module = $derived(getAssetType(editor.assetType));
 
-	// Render at a fixed base size derived from the asset's first output size
-	let baseDimensions = $derived.by(() => {
-		if (!module || !module.sizes[0]) return { w: 400, h: 600 };
-		const size = module.sizes[0];
-		const aspect = size.w / size.h;
-		// Base render: fit within 560x640
+	// Render resolution — use the selected size or first size entry
+	let renderSize = $derived.by(() => {
+		if (!module || !module.sizes[0]) return { w: 1080, h: 1920 };
+		if (editor.sizeId) {
+			const found = module.sizes.find((s) => s.id === editor.sizeId);
+			if (found) return { w: found.w, h: found.h };
+		}
+		return { w: module.sizes[0].w, h: module.sizes[0].h };
+	});
+
+	// Base display size (how big the canvas appears at zoom=1)
+	let displaySize = $derived.by(() => {
+		const maxW = 420;
+		const maxH = 560;
+		const aspect = renderSize.w / renderSize.h;
 		let w, h;
 		if (aspect > 1) {
-			w = Math.min(560, size.w);
+			w = Math.min(maxW, renderSize.w);
 			h = w / aspect;
-			if (h > 640) { h = 640; w = h * aspect; }
+			if (h > maxH) { h = maxH; w = h * aspect; }
 		} else {
-			h = Math.min(640, size.h);
+			h = Math.min(maxH, renderSize.h);
 			w = h * aspect;
-			if (w > 560) { w = 560; h = w / aspect; }
+			if (w > maxW) { w = maxW; h = w / aspect; }
 		}
 		return { w: Math.round(w), h: Math.round(h) };
 	});
 
 	let zoomPercent = $derived(Math.round(zoom * 100));
 
+	// Render at full resolution, display via CSS sizing
 	$effect(() => {
 		if (!canvas || !module) return;
 
-		const dims = baseDimensions;
-		canvas.width = dims.w;
-		canvas.height = dims.h;
+		canvas.width = renderSize.w;
+		canvas.height = renderSize.h;
 
 		const ctx = canvas.getContext('2d');
-		ctx.clearRect(0, 0, dims.w, dims.h);
+		ctx.clearRect(0, 0, renderSize.w, renderSize.h);
 
 		const config = {
 			layout: editor.layout,
 			background: editor.background,
 			texts: { ...editor.texts },
+			fonts: { ...editor.fonts },
 			images: { ...editor.images }
 		};
 
-		module.render(ctx, config, dims.w, dims.h);
+		module.render(ctx, config, renderSize.w, renderSize.h);
 	});
 
 	function zoomIn() {
@@ -66,11 +76,11 @@
 	}
 
 	function zoomToFit() {
-		if (!container || !baseDimensions) { zoom = 1; return; }
+		if (!container) { zoom = 1; return; }
 		const padding = 40;
 		const availW = container.clientWidth - padding * 2;
 		const availH = container.clientHeight - padding * 2;
-		const fitZoom = Math.min(availW / baseDimensions.w, availH / baseDimensions.h, MAX_ZOOM);
+		const fitZoom = Math.min(availW / displaySize.w, availH / displaySize.h, MAX_ZOOM);
 		zoom = Math.max(MIN_ZOOM, +fitZoom.toFixed(2));
 	}
 
@@ -84,8 +94,7 @@
 		if (!module) return null;
 
 		const thumbW = 160;
-		const size = module.sizes[0];
-		const aspect = size.w / size.h;
+		const aspect = renderSize.w / renderSize.h;
 		const thumbH = Math.round(thumbW / aspect);
 
 		const offscreen = document.createElement('canvas');
@@ -93,23 +102,24 @@
 		offscreen.height = thumbH;
 		const ctx = offscreen.getContext('2d');
 
-		const config = {
-			layout: editor.layout,
-			background: editor.background,
-			texts: { ...editor.texts },
-			images: { ...editor.images }
-		};
-
-		module.render(ctx, config, thumbW, thumbH);
+		// Draw from the already-rendered full-res canvas
+		if (canvas) {
+			ctx.drawImage(canvas, 0, 0, thumbW, thumbH);
+		}
 		return offscreen.toDataURL('image/png');
 	}
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="canvas-container" bind:this={container} onwheel={handleWheel}>
-	<div class="canvas-wrapper" style="transform: scale({zoom});">
+	<div
+		class="canvas-wrapper"
+		style="width: {displaySize.w * zoom}px; height: {displaySize.h * zoom}px;"
+	>
 		<canvas bind:this={canvas}></canvas>
 	</div>
+
+	<div class="size-badge">{renderSize.w} x {renderSize.h}</div>
 
 	<div class="zoom-controls">
 		<button class="zoom-btn" onclick={zoomOut} aria-label="Zoom out">
@@ -139,15 +149,31 @@
 	}
 
 	.canvas-wrapper {
-		transition: transform 0.15s ease;
-		transform-origin: center center;
 		flex-shrink: 0;
 	}
 
 	canvas {
+		width: 100%;
+		height: 100%;
 		border-radius: 8px;
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 		display: block;
+	}
+
+	.size-badge {
+		position: absolute;
+		bottom: 12px;
+		left: 12px;
+		background: var(--bg-card, #222228);
+		border: 1px solid var(--border, #2e2e36);
+		border-radius: 6px;
+		padding: 4px 10px;
+		font-size: 11px;
+		font-weight: 600;
+		color: var(--text-secondary, #9d9baa);
+		z-index: 10;
+		font-family: var(--font, 'Inter'), monospace;
+		letter-spacing: 0.3px;
 	}
 
 	.zoom-controls {
@@ -161,6 +187,7 @@
 		border: 1px solid var(--border, #2e2e36);
 		border-radius: 8px;
 		padding: 3px;
+		z-index: 10;
 	}
 
 	.zoom-btn {
