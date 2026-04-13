@@ -150,7 +150,8 @@ function render(ctx, config, baseW, baseH) {
 			ld.phone.ph * pt.scale,
 			0,
 			false,
-			config.images.screenshot
+			config.images.screenshot,
+			config.phoneFrame
 		);
 	}
 }

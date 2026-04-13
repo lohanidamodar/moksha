@@ -113,7 +113,8 @@ export function renderScreenshotMockup(ctx, config, baseW, baseH) {
 		phoneH,
 		phoneAngle,
 		p.perspective || false,
-		config.images?.screenshot ?? null
+		config.images?.screenshot ?? null,
+		config.phoneFrame
 	);
 
 	// 4. Title text — font size proportional to canvas

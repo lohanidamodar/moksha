@@ -11,6 +11,7 @@ class QueueState {
 			background: { ...item.background },
 			texts: { ...item.texts },
 			fonts: item.fonts ? { ...item.fonts } : undefined,
+			phoneFrame: item.phoneFrame ?? 'iphone-dynamic-island',
 			transforms: item.transforms ?? undefined,
 			layoutTransforms: item.layoutTransforms ?? undefined,
 			images: { ...item.images },

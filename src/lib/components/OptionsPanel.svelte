@@ -9,6 +9,7 @@
 	import FontSelector from './FontSelector.svelte';
 	import TransformControls from './TransformControls.svelte';
 	import { resolveLayout } from '$lib/layoutResolver.js';
+	import { PHONE_FRAMES } from '$lib/renderer/phone-frame.js';
 
 	let { generateThumbnail } = $props();
 
@@ -35,6 +36,7 @@
 			background: deepCopy(editor.background),
 			texts: deepCopy(editor.texts),
 			fonts: deepCopy(editor.fonts),
+			phoneFrame: editor.phoneFrame,
 			transforms: deepCopy(resolved.transforms),
 			layoutTransforms: deepCopy(editor.layoutTransforms),
 			images: { ...editor.images },
@@ -85,6 +87,21 @@
 			<h3 class="section-title">Background</h3>
 			<BackgroundPicker />
 		</section>
+
+		{#if imageInputs.some((i) => i.id === 'screenshot')}
+			<section class="section">
+				<h3 class="section-title">Phone Frame</h3>
+				<select
+					class="format-select"
+					value={editor.phoneFrame}
+					onchange={(e) => editor.phoneFrame = e.target.value}
+				>
+					{#each PHONE_FRAMES as frame}
+						<option value={frame.id}>{frame.label}</option>
+					{/each}
+				</select>
+			</section>
+		{/if}
 
 		<section class="section">
 			<h3 class="section-title">Transform</h3>

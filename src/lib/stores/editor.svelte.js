@@ -7,6 +7,7 @@ const DEFAULTS = {
 	background: { type: 'gradient', id: 'sunset-pink' },
 	texts: { title: '', subtitle: '' },
 	fonts: { title: 'Montserrat', subtitle: 'Open Sans' },
+	phoneFrame: 'iphone-dynamic-island',
 	images: { screenshot: null },
 	editingQueueId: null
 };
@@ -18,6 +19,7 @@ class EditorState {
 	background = $state({ ...DEFAULTS.background });
 	texts = $state({ ...DEFAULTS.texts });
 	fonts = $state({ ...DEFAULTS.fonts });
+	phoneFrame = $state(DEFAULTS.phoneFrame);
 	layoutTransforms = $state({});
 	images = $state({ ...DEFAULTS.images });
 	editingQueueId = $state(DEFAULTS.editingQueueId);
@@ -52,6 +54,7 @@ class EditorState {
 		this.background = { ...DEFAULTS.background };
 		this.texts = { ...DEFAULTS.texts };
 		this.fonts = { ...DEFAULTS.fonts };
+		this.phoneFrame = DEFAULTS.phoneFrame;
 		this.layoutTransforms = {};
 		this.images = { ...DEFAULTS.images };
 		this.editingQueueId = DEFAULTS.editingQueueId;
@@ -64,6 +67,7 @@ class EditorState {
 		this.background = { ...item.background };
 		this.texts = { ...item.texts };
 		this.fonts = { ...(item.fonts ?? DEFAULTS.fonts) };
+		this.phoneFrame = item.phoneFrame ?? DEFAULTS.phoneFrame;
 		this.layoutTransforms = item.layoutTransforms
 			? structuredClone(item.layoutTransforms)
 			: (item.transforms ? { [item.layout]: structuredClone(item.transforms) } : {});
