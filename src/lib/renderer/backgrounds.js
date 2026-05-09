@@ -179,18 +179,28 @@ export const SOLIDS = [
  * Patterns are tone-aware: they pick light or dark overlay colors based on background tone.
  */
 export const PATTERNS = [
+	// Subtle geometric (tone-aware)
 	{ id: 'dots', label: 'Dots', draw: drawDots },
 	{ id: 'soft-grid', label: 'Soft Grid', draw: drawSoftGrid },
+	{ id: 'grid', label: 'Grid', draw: drawGrid },
 	{ id: 'topography', label: 'Topography', draw: drawTopography },
-	{ id: 'bokeh', label: 'Bokeh', draw: drawBokeh, fixedColors: true },
-	{ id: 'aurora-streaks', label: 'Aurora Streaks', draw: drawAuroraStreaks, fixedColors: true },
 	{ id: 'diagonal-lines', label: 'Diagonal Lines', draw: drawDiagonalLines },
+	{ id: 'vertical-lines', label: 'Pinstripes', draw: drawVerticalLines },
 	{ id: 'hex-grid', label: 'Hex Grid', draw: drawHexGrid },
+	{ id: 'triangles', label: 'Triangles', draw: drawTriangles },
+	{ id: 'plus', label: 'Plus Marks', draw: drawPlusMarks },
+	{ id: 'stars', label: 'Stars', draw: drawStars },
+	{ id: 'halftone', label: 'Halftone', draw: drawHalftone },
 	{ id: 'noise', label: 'Noise', draw: drawNoise },
 	{ id: 'circles', label: 'Circles', draw: drawCircles },
 	{ id: 'waves', label: 'Waves', draw: drawWaves },
 	{ id: 'crosshatch', label: 'Crosshatch', draw: drawCrosshatch },
-	{ id: 'geometric', label: 'Geometric', draw: drawGeometric }
+	{ id: 'geometric', label: 'Geometric', draw: drawGeometric },
+	// Decorative (fixed colors)
+	{ id: 'bokeh', label: 'Bokeh', draw: drawBokeh, fixedColors: true },
+	{ id: 'aurora-streaks', label: 'Aurora Streaks', draw: drawAuroraStreaks, fixedColors: true },
+	{ id: 'confetti', label: 'Confetti', draw: drawConfetti, fixedColors: true },
+	{ id: 'memphis', label: 'Memphis', draw: drawMemphis, fixedColors: true }
 ];
 
 // ============================================================
@@ -671,4 +681,220 @@ function drawGeometric(ctx, w, h, color) {
 			ctx.strokeRect(cx - size / 2, cy - size / 2, size, size);
 		}
 	}
+}
+
+/** Square grid lines */
+function drawGrid(ctx, w, h, color) {
+	ctx.strokeStyle = color;
+	ctx.lineWidth = Math.max(1, w * 0.0008);
+	const spacing = Math.max(w, h) * 0.04;
+	for (let x = 0; x < w; x += spacing) {
+		ctx.beginPath();
+		ctx.moveTo(x, 0);
+		ctx.lineTo(x, h);
+		ctx.stroke();
+	}
+	for (let y = 0; y < h; y += spacing) {
+		ctx.beginPath();
+		ctx.moveTo(0, y);
+		ctx.lineTo(w, y);
+		ctx.stroke();
+	}
+}
+
+/** Vertical pinstripes */
+function drawVerticalLines(ctx, w, h, color) {
+	ctx.strokeStyle = color;
+	ctx.lineWidth = Math.max(1, w * 0.001);
+	const spacing = Math.max(w, h) * 0.022;
+	for (let x = 0; x < w; x += spacing) {
+		ctx.beginPath();
+		ctx.moveTo(x, 0);
+		ctx.lineTo(x, h);
+		ctx.stroke();
+	}
+}
+
+/** Triangle tessellation — small filled triangles */
+function drawTriangles(ctx, w, h, color) {
+	ctx.fillStyle = color;
+	const size = Math.max(w, h) * 0.035;
+	const triH = size * Math.sqrt(3) / 2;
+	for (let row = 0; row * triH < h + triH; row++) {
+		for (let col = 0; col * (size / 2) < w + size; col++) {
+			const x = col * (size / 2);
+			const y = row * triH;
+			const flip = (row + col) % 2 === 0;
+			ctx.beginPath();
+			if (flip) {
+				ctx.moveTo(x, y);
+				ctx.lineTo(x + size / 2, y + triH);
+				ctx.lineTo(x - size / 2, y + triH);
+			} else {
+				ctx.moveTo(x, y + triH);
+				ctx.lineTo(x + size / 2, y);
+				ctx.lineTo(x - size / 2, y);
+			}
+			ctx.closePath();
+			ctx.fill();
+		}
+	}
+}
+
+/** Tiny plus marks at grid points */
+function drawPlusMarks(ctx, w, h, color) {
+	ctx.strokeStyle = color;
+	ctx.lineWidth = Math.max(1, w * 0.001);
+	const spacing = Math.max(w, h) * 0.04;
+	const armLen = spacing * 0.18;
+	ctx.lineCap = 'round';
+	for (let x = spacing; x < w; x += spacing) {
+		for (let y = spacing; y < h; y += spacing) {
+			ctx.beginPath();
+			ctx.moveTo(x - armLen, y);
+			ctx.lineTo(x + armLen, y);
+			ctx.moveTo(x, y - armLen);
+			ctx.lineTo(x, y + armLen);
+			ctx.stroke();
+		}
+	}
+}
+
+/** Small 5-point stars scattered across canvas */
+function drawStars(ctx, w, h, color) {
+	ctx.fillStyle = color;
+	let seed = 31;
+	function rand() {
+		seed = (seed * 16807) % 2147483647;
+		return seed / 2147483647;
+	}
+	const count = Math.round((w * h) / 12000);
+	for (let i = 0; i < count; i++) {
+		const cx = rand() * w;
+		const cy = rand() * h;
+		const r = (3 + rand() * 5) * Math.max(1, w / 800);
+		ctx.beginPath();
+		for (let k = 0; k < 5; k++) {
+			const outer = (Math.PI / 2) + (k * Math.PI * 2) / 5;
+			const inner = outer + Math.PI / 5;
+			const ox = cx + Math.cos(outer) * r;
+			const oy = cy - Math.sin(outer) * r;
+			const ix = cx + Math.cos(inner) * (r * 0.45);
+			const iy = cy - Math.sin(inner) * (r * 0.45);
+			if (k === 0) ctx.moveTo(ox, oy);
+			else ctx.lineTo(ox, oy);
+			ctx.lineTo(ix, iy);
+		}
+		ctx.closePath();
+		ctx.fill();
+	}
+}
+
+/** Halftone — dots that grow larger toward the bottom for a print/zine feel */
+function drawHalftone(ctx, w, h, color) {
+	ctx.fillStyle = color;
+	const cols = 36;
+	const rows = Math.round((cols * h) / w);
+	const spacingX = w / cols;
+	const spacingY = h / rows;
+	for (let row = 0; row < rows; row++) {
+		for (let col = 0; col < cols; col++) {
+			const x = (col + 0.5) * spacingX;
+			const y = (row + 0.5) * spacingY;
+			// Radius increases with row (top → small, bottom → large)
+			const t = row / rows;
+			const r = spacingX * (0.05 + t * 0.4);
+			ctx.beginPath();
+			ctx.arc(x, y, r, 0, Math.PI * 2);
+			ctx.fill();
+		}
+	}
+}
+
+/** Confetti — colorful sprinkles scattered across the canvas */
+function drawConfetti(ctx, w, h) {
+	const colors = ['#ff6b9d', '#feca57', '#48dbfb', '#1dd1a1', '#ee5a6f', '#7367f0', '#ffa502'];
+	let seed = 53;
+	function rand() {
+		seed = (seed * 16807) % 2147483647;
+		return seed / 2147483647;
+	}
+	const count = Math.round((w * h) / 5000);
+	ctx.save();
+	for (let i = 0; i < count; i++) {
+		const cx = rand() * w;
+		const cy = rand() * h;
+		const len = (4 + rand() * 8) * Math.max(1, w / 800);
+		const thick = len * 0.35;
+		const angle = rand() * Math.PI;
+		const color = colors[Math.floor(rand() * colors.length)];
+		ctx.save();
+		ctx.translate(cx, cy);
+		ctx.rotate(angle);
+		ctx.fillStyle = color;
+		ctx.globalAlpha = 0.85;
+		ctx.fillRect(-len / 2, -thick / 2, len, thick);
+		ctx.restore();
+	}
+	ctx.restore();
+}
+
+/** Memphis — playful 80s style: scattered colorful shapes (squiggles, dots, triangles) */
+function drawMemphis(ctx, w, h) {
+	const colors = ['#ff6b9d', '#feca57', '#48dbfb', '#7367f0', '#ee5a6f', '#5f27cd'];
+	let seed = 71;
+	function rand() {
+		seed = (seed * 16807) % 2147483647;
+		return seed / 2147483647;
+	}
+	ctx.save();
+	const count = Math.round((w * h) / 18000);
+	for (let i = 0; i < count; i++) {
+		const cx = rand() * w;
+		const cy = rand() * h;
+		const size = (15 + rand() * 35) * Math.max(1, w / 800);
+		const color = colors[Math.floor(rand() * colors.length)];
+		const shape = Math.floor(rand() * 4);
+		ctx.fillStyle = color;
+		ctx.strokeStyle = color;
+		ctx.lineWidth = size * 0.18;
+		ctx.lineCap = 'round';
+		ctx.globalAlpha = 0.9;
+
+		if (shape === 0) {
+			// Filled circle
+			ctx.beginPath();
+			ctx.arc(cx, cy, size * 0.35, 0, Math.PI * 2);
+			ctx.fill();
+		} else if (shape === 1) {
+			// Filled triangle
+			ctx.beginPath();
+			ctx.moveTo(cx, cy - size * 0.4);
+			ctx.lineTo(cx - size * 0.4, cy + size * 0.3);
+			ctx.lineTo(cx + size * 0.4, cy + size * 0.3);
+			ctx.closePath();
+			ctx.fill();
+		} else if (shape === 2) {
+			// Squiggle (semicircles)
+			ctx.beginPath();
+			const segs = 3;
+			for (let s = 0; s < segs; s++) {
+				const x0 = cx - size * 0.4 + (s * size * 0.4);
+				const x1 = x0 + size * 0.4;
+				const dir = s % 2 === 0 ? 1 : -1;
+				ctx.moveTo(x0, cy);
+				ctx.arc(x0 + size * 0.2, cy, size * 0.2, Math.PI, 0, dir < 0);
+			}
+			ctx.stroke();
+		} else {
+			// Cross / X
+			ctx.beginPath();
+			ctx.moveTo(cx - size * 0.3, cy - size * 0.3);
+			ctx.lineTo(cx + size * 0.3, cy + size * 0.3);
+			ctx.moveTo(cx - size * 0.3, cy + size * 0.3);
+			ctx.lineTo(cx + size * 0.3, cy - size * 0.3);
+			ctx.stroke();
+		}
+	}
+	ctx.restore();
 }

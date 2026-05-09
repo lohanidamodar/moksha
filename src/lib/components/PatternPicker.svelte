@@ -35,6 +35,22 @@
 				return 'background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.15) 4px, rgba(255,255,255,0.15) 5px), repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(255,255,255,0.15) 4px, rgba(255,255,255,0.15) 5px); background-color: #1a1a2e;';
 			case 'geometric':
 				return 'background: #1f2937; background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%); background-size: 12px 12px;';
+			case 'grid':
+				return 'background-color: #2a2a2e; background-image: linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px); background-size: 8px 8px;';
+			case 'vertical-lines':
+				return 'background-image: repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(255,255,255,0.18) 4px, rgba(255,255,255,0.18) 5px); background-color: #2a2a2e;';
+			case 'triangles':
+				return 'background-color: #1f2937; background-image: linear-gradient(45deg, rgba(255,255,255,0.2) 50%, transparent 50%); background-size: 6px 6px;';
+			case 'plus':
+				return 'background-color: #2a2a2e; background-image: linear-gradient(rgba(255,255,255,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.25) 1px, transparent 1px); background-size: 12px 12px;';
+			case 'stars':
+				return 'background-color: #1a1a2e; background-image: radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1.5px); background-size: 14px 14px;';
+			case 'halftone':
+				return 'background: #2a2a2e; background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4) 1px, transparent 1.5px); background-size: 6px 6px, 6px 6px;';
+			case 'confetti':
+				return 'background: #1a1a2e; background-image: radial-gradient(circle at 25% 25%, #ff6b9d 1.5px, transparent 2px), radial-gradient(circle at 70% 50%, #feca57 1.5px, transparent 2px), radial-gradient(circle at 40% 75%, #48dbfb 1.5px, transparent 2px), radial-gradient(circle at 80% 20%, #1dd1a1 1.5px, transparent 2px); background-size: 16px 16px;';
+			case 'memphis':
+				return 'background: #1a1a2e; background-image: radial-gradient(circle at 30% 30%, rgba(255,107,157,0.7) 4px, transparent 5px), radial-gradient(circle at 70% 70%, rgba(72,219,251,0.7) 4px, transparent 5px), linear-gradient(45deg, transparent 45%, rgba(254,202,87,0.6) 45%, rgba(254,202,87,0.6) 55%, transparent 55%); background-size: 20px 20px;';
 			default:
 				return 'background: #2a2a2e;';
 		}
