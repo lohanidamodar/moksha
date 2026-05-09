@@ -80,9 +80,12 @@ export async function GET() {
 				options: assetTypes.map((a) => ({
 					id: a.id,
 					label: a.label,
+					platform: a.platform,
 					sizes: a.sizes,
 					layouts: a.layouts.map((l) => l.id),
-					inputs: a.inputs
+					inputs: a.inputs,
+					defaultPhoneFrame: a.defaultPhoneFrame,
+					allowedPhoneFrames: a.allowedPhoneFrames
 				}))
 			},
 			sizeId: 'string — size variant id (defaults to first size)',
@@ -98,29 +101,46 @@ export async function GET() {
 			},
 			phoneFrame: {
 				options: ['iphone-dynamic-island', 'iphone-notch', 'ipad', 'android-punch-hole', 'android-clean', 'frameless'],
-				default: 'iphone-dynamic-island'
+				note: 'Each screenshot asset type has its own defaultPhoneFrame and allowedPhoneFrames — use those to pick frame.'
 			},
 			transforms: {
 				phone: { x: 'number (-50 to 50)', y: 'number (-50 to 50)', scale: 'number (0.3 to 2)', rotation: 'number (-45 to 45)' },
 				logo: { x: 'number (-50 to 50)', y: 'number (-50 to 50)', scale: 'number (0.3 to 2)', rotation: 'number (-45 to 45)' }
 			}
 		},
+		assetTypeOverview: {
+			'iphone-screenshot': 'iPhone screenshot mockup. Renders 4 sizes (5.5"–6.7"). Use iPhone frames.',
+			'ipad-screenshot': 'iPad screenshot mockup. Renders 2 sizes (10.5", 12.9"). Use iPad frame.',
+			'android-phone-screenshot': 'Android phone screenshot mockup. Use Android frames.',
+			'android-tablet-screenshot': 'Android tablet screenshot mockup. Renders 7" and 10" sizes.',
+			'feature-graphic': 'Play Store feature graphic (1024x500).',
+			'promo-banner': 'Promotional banner with logo, headline, optional screenshot.',
+			'app-icon-showcase': 'App icon presented on a styled background (1024x1024 or 512x512).',
+			'social-card': 'Open Graph / Twitter / Instagram cards.'
+		},
 		examples: {
-			simple: {
-				assetType: 'screenshot-mockup',
+			iphone: {
+				assetType: 'iphone-screenshot',
 				layout: 'tilt-right',
 				background: { type: 'gradient', id: 'sunset-pink' },
-				texts: { title: 'My App', subtitle: 'Best app ever' }
+				texts: { title: 'My App', subtitle: 'Best app ever' },
+				phoneFrame: 'iphone-dynamic-island'
 			},
-			withOptions: {
-				assetType: 'screenshot-mockup',
-				sizeId: 'android-phone',
+			androidPhone: {
+				assetType: 'android-phone-screenshot',
 				layout: 'hero-center',
 				background: { type: 'pattern', id: 'dots' },
 				texts: { title: 'Amazing App', subtitle: 'Download now' },
 				fonts: { title: 'Bebas Neue', subtitle: 'Lato' },
 				phoneFrame: 'android-punch-hole',
 				transforms: { phone: { x: 0, y: -5, scale: 1.1, rotation: 0 } }
+			},
+			ipad: {
+				assetType: 'ipad-screenshot',
+				layout: 'float-up',
+				background: { type: 'gradient', id: 'ocean' },
+				texts: { title: 'Tablet App', subtitle: 'Optimized for iPad' },
+				phoneFrame: 'ipad'
 			},
 			featureGraphic: {
 				assetType: 'feature-graphic',
@@ -130,13 +150,13 @@ export async function GET() {
 			}
 		},
 		imageFields: {
-			screenshot: 'Image file — used by screenshot-mockup, promo-banner, social-card',
+			screenshot: 'Image file — used by iphone-screenshot, ipad-screenshot, android-phone-screenshot, android-tablet-screenshot, promo-banner, social-card',
 			logo: 'Image file — used by feature-graphic, promo-banner, social-card',
 			icon: 'Image file — used by app-icon-showcase'
 		},
 		curlExamples: [
-			'curl -X POST http://localhost:3000/api/render -H "Content-Type: application/json" -d \'{"assetType":"screenshot-mockup","layout":"tilt-right","background":{"type":"gradient","id":"sunset-pink"},"texts":{"title":"Hello World"}}\' --output mockup.png',
-			'curl -X POST http://localhost:3000/api/render -F \'config={"assetType":"screenshot-mockup","layout":"hero-center","texts":{"title":"My App"}}\' -F screenshot=@screenshot.png --output mockup.png'
+			'curl -X POST http://localhost:3000/api/render -H "Content-Type: application/json" -d \'{"assetType":"iphone-screenshot","layout":"tilt-right","background":{"type":"gradient","id":"sunset-pink"},"texts":{"title":"Hello World"}}\' --output mockup.png',
+			'curl -X POST http://localhost:3000/api/render -F \'config={"assetType":"android-phone-screenshot","layout":"hero-center","phoneFrame":"android-punch-hole","texts":{"title":"My App"}}\' -F screenshot=@screenshot.png --output mockup.png'
 		]
 	};
 

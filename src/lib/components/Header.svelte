@@ -11,6 +11,10 @@
 		editor.assetType = id;
 		editor.sizeId = null;
 		editor.layout = mod?.layouts[0]?.id ?? '';
+		// Reset phone frame to the asset's default if defined
+		if (mod?.defaultPhoneFrame) {
+			editor.phoneFrame = mod.defaultPhoneFrame;
+		}
 	}
 </script>
 

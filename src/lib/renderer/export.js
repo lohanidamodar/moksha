@@ -111,9 +111,12 @@ function getFolderPath(assetTypeId, size) {
  */
 function getSubfolder(assetTypeId) {
 	switch (assetTypeId) {
-		case 'screenshot-mockup':
-		case 'app-store-preview':
-			return 'screenshots';
+		case 'iphone-screenshot':
+		case 'android-phone-screenshot':
+			return 'screenshots/phone';
+		case 'ipad-screenshot':
+		case 'android-tablet-screenshot':
+			return 'screenshots/tablet';
 		case 'feature-graphic':
 			return 'feature-graphic';
 		case 'promo-banner':

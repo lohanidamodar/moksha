@@ -1,7 +1,7 @@
 const DEFAULT_TRANSFORM = { phone: { x: 0, y: 0, scale: 1, rotation: null }, logo: { x: 0, y: 0, scale: 1, rotation: null } };
 
 const DEFAULTS = {
-	assetType: 'screenshot-mockup',
+	assetType: 'iphone-screenshot',
 	sizeId: null,
 	layout: 'tilt-right',
 	background: { type: 'gradient', id: 'sunset-pink' },

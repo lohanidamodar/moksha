@@ -1,19 +1,18 @@
 /**
- * Screenshot Mockup — phone frame with screenshot, title, and subtitle.
- * Layout positions use proportional coordinates based on canvas dimensions.
+ * Shared rendering and layouts for all screenshot mockup variants
+ * (iPhone, iPad, Android Phone, Android Tablet).
+ *
+ * Layout positions use proportional coordinates so they work for any
+ * canvas dimensions.
  */
 import { renderBackground } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { drawText } from '$lib/renderer/canvas.js';
 
-/**
- * Returns phone and title positioning for a given layout id.
- * All coordinates are proportional to the given w/h.
- */
+/** Returns phone and title positioning for a given layout id. */
 export function getLayout(layout, w, h) {
-	// Phone sizes as proportions of canvas
-	const pw = w * 0.56;   // phone width
-	const ph = pw * 2;     // phone height (2:1 aspect)
+	const pw = w * 0.56;
+	const ph = pw * 2;
 	const pwSmall = w * 0.52;
 	const phSmall = pwSmall * 2;
 
@@ -76,28 +75,38 @@ export function getLayout(layout, w, h) {
 	}
 }
 
-/**
- * Core render function for screenshot mockups.
- * Exported so app-store-preview can reuse it.
- *
- * @param {CanvasRenderingContext2D} ctx
- * @param {object} config - { layout, background, texts: { title, subtitle }, images: { screenshot } }
- * @param {number} baseW
- * @param {number} baseH
- */
-export function renderScreenshotMockup(ctx, config, baseW, baseH) {
+/** Shared layout list — all device families use the same layouts */
+export const SCREENSHOT_LAYOUTS = [
+	{ id: 'tilt-right', label: 'Tilt Right' },
+	{ id: 'left-title', label: 'Left Title' },
+	{ id: 'float-up', label: 'Float Up' },
+	{ id: 'tilt-left', label: 'Tilt Left' },
+	{ id: 'right-title', label: 'Right Title' },
+	{ id: 'bottom-emerge', label: 'Bottom Emerge' },
+	{ id: 'perspective', label: 'Perspective' },
+	{ id: 'hero-center', label: 'Hero Center' },
+	{ id: 'split-left', label: 'Split Left' },
+	{ id: 'split-right', label: 'Split Right' }
+];
+
+/** Shared inputs */
+export const SCREENSHOT_INPUTS = [
+	{ id: 'screenshot', type: 'image', label: 'Screenshot', placeholder: 'Upload a screenshot' },
+	{ id: 'title', type: 'text', label: 'Title', placeholder: 'Find Rentals\nNear You' },
+	{ id: 'subtitle', type: 'text', label: 'Subtitle', placeholder: 'Subtitle text' }
+];
+
+/** Shared render function */
+export function renderScreenshot(ctx, config, baseW, baseH) {
 	const w = baseW;
 	const h = baseH;
 
-	// 1. Background
 	renderBackground(ctx, w, h, config.background);
 
-	// 2. Layout positioning — fully proportional, no scaling needed
 	const layoutData = getLayout(config.layout, w, h);
 	const p = layoutData.phone;
 	const t = layoutData.title;
 
-	// 3. Apply phone transforms (offset as % of canvas, scale multiplier, rotation absolute)
 	const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1, rotation: null };
 	const phoneX = p.x + (pt.x / 100) * w;
 	const phoneY = p.y + (pt.y / 100) * h;
@@ -105,19 +114,8 @@ export function renderScreenshotMockup(ctx, config, baseW, baseH) {
 	const phoneH = p.h * pt.scale;
 	const phoneAngle = pt.rotation != null ? pt.rotation : (p.angle || 0);
 
-	drawPhoneFrame(
-		ctx,
-		phoneX,
-		phoneY,
-		phoneW,
-		phoneH,
-		phoneAngle,
-		p.perspective || false,
-		config.images?.screenshot ?? null,
-		config.phoneFrame
-	);
+	drawPhoneFrame(ctx, phoneX, phoneY, phoneW, phoneH, phoneAngle, p.perspective || false, config.images?.screenshot ?? null, config.phoneFrame);
 
-	// 4. Title text — font size proportional to canvas
 	const titleFont = config.fonts?.title || 'Inter';
 	const subtitleFont = config.fonts?.subtitle || 'Inter';
 	const titleText = config.texts?.title || '';
@@ -130,8 +128,6 @@ export function renderScreenshotMockup(ctx, config, baseW, baseH) {
 			shadow: { color: 'rgba(0,0,0,0.4)', blur: 20, offsetY: 4 }
 		});
 	}
-
-	// 5. Subtitle text — rendered below title
 	const subtitleText = config.texts?.subtitle || '';
 	if (subtitleText) {
 		const titleFontSize = Math.round(w * 0.065);
@@ -147,38 +143,3 @@ export function renderScreenshotMockup(ctx, config, baseW, baseH) {
 		});
 	}
 }
-
-export default {
-	id: 'screenshot-mockup',
-	label: 'Screenshot Mockup',
-	icon: '\ud83d\udcf1',
-	sizes: [
-		{ id: 'android-phone', label: 'Android Phone (1080x1920)', w: 1080, h: 1920, platform: 'android' },
-		{ id: 'android-7inch', label: 'Android 7" Tablet (1200x1920)', w: 1200, h: 1920, platform: 'android' },
-		{ id: 'android-10inch', label: 'Android 10" Tablet (1600x2560)', w: 1600, h: 2560, platform: 'android' },
-		{ id: 'ios-6.7', label: 'iPhone 6.7" (1290x2796)', w: 1290, h: 2796, platform: 'ios' },
-		{ id: 'ios-6.5', label: 'iPhone 6.5" (1242x2688)', w: 1242, h: 2688, platform: 'ios' },
-		{ id: 'ios-6.1', label: 'iPhone 6.1" (1284x2778)', w: 1284, h: 2778, platform: 'ios' },
-		{ id: 'ios-5.5', label: 'iPhone 5.5" (1242x2208)', w: 1242, h: 2208, platform: 'ios' },
-		{ id: 'ipad-12.9', label: 'iPad Pro 12.9" (2048x2732)', w: 2048, h: 2732, platform: 'ios' },
-		{ id: 'ipad-10.5', label: 'iPad 10.5" (1668x2224)', w: 1668, h: 2224, platform: 'ios' }
-	],
-	inputs: [
-		{ id: 'screenshot', type: 'image', label: 'Screenshot', placeholder: 'Upload a screenshot' },
-		{ id: 'title', type: 'text', label: 'Title', placeholder: 'Find Rentals\nNear You' },
-		{ id: 'subtitle', type: 'text', label: 'Subtitle', placeholder: 'Subtitle text' }
-	],
-	layouts: [
-		{ id: 'tilt-right', label: 'Tilt Right' },
-		{ id: 'left-title', label: 'Left Title' },
-		{ id: 'float-up', label: 'Float Up' },
-		{ id: 'tilt-left', label: 'Tilt Left' },
-		{ id: 'right-title', label: 'Right Title' },
-		{ id: 'bottom-emerge', label: 'Bottom Emerge' },
-		{ id: 'perspective', label: 'Perspective' },
-		{ id: 'hero-center', label: 'Hero Center' },
-		{ id: 'split-left', label: 'Split Left' },
-		{ id: 'split-right', label: 'Split Right' }
-	],
-	render: renderScreenshotMockup
-};

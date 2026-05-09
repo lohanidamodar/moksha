@@ -19,6 +19,11 @@
 	let imageInputs = $derived(inputs.filter((i) => i.type === 'image'));
 	let textInputs = $derived(inputs.filter((i) => i.type !== 'image'));
 	let isEditing = $derived(!!editor.editingQueueId);
+	let availableFrames = $derived(
+		module?.allowedPhoneFrames
+			? PHONE_FRAMES.filter((f) => module.allowedPhoneFrames.includes(f.id))
+			: PHONE_FRAMES
+	);
 
 	function deepCopy(obj) {
 		return JSON.parse(JSON.stringify(obj));
@@ -93,7 +98,7 @@
 					value={editor.phoneFrame}
 					onchange={(e) => editor.phoneFrame = e.target.value}
 				>
-					{#each PHONE_FRAMES as frame}
+					{#each availableFrames as frame}
 						<option value={frame.id}>{frame.label}</option>
 					{/each}
 				</select>
