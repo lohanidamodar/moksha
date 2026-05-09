@@ -53,8 +53,11 @@ curl -X POST http://localhost:5173/api/render \
     "assetType": "iphone-screenshot",
     "layout": "tilt-right",
     "background": { "type": "gradient", "id": "sunset-pink" },
-    "texts": { "title": "My App", "subtitle": "Best app ever" },
-    "phoneFrame": "iphone-dynamic-island"
+    "phoneFrame": "iphone-dynamic-island",
+    "textOverlays": [
+      { "text": "My App", "anchor": "top-left", "fontSize": 0.07, "weight": 800 },
+      { "text": "Best app ever", "anchor": "top-left", "offsetY": 0.08, "fontSize": 0.04 }
+    ]
   }' \
   --output mockup.png
 ```
@@ -68,9 +71,11 @@ curl -X POST http://localhost:5173/api/render \
     "sizeId": "android-phone",
     "layout": "hero-center",
     "background": { "type": "pattern", "id": "dots" },
-    "texts": { "title": "Amazing App", "subtitle": "Download now" },
-    "fonts": { "title": "Bebas Neue", "subtitle": "Lato" },
-    "phoneFrame": "android-punch-hole"
+    "phoneFrame": "android-punch-hole",
+    "textOverlays": [
+      { "text": "Amazing App", "anchor": "top-center", "font": "Bebas Neue", "fontSize": 0.08 },
+      { "text": "Download now", "anchor": "bottom-center", "font": "Lato", "fontSize": 0.04 }
+    ]
   }' \
   -F screenshot=@screenshot.png \
   --output mockup.png
@@ -87,7 +92,7 @@ curl -X POST http://localhost:5173/api/render/batch \
       "assetType": "iphone-screenshot",
       "layout": "tilt-right",
       "background": { "type": "gradient", "id": "sunset-pink" },
-      "texts": { "title": "Screen 1" },
+      "textOverlays": [{ "text": "Screen 1", "anchor": "top-left", "fontSize": 0.07, "weight": 800 }],
       "imageRefs": { "screenshot": "iphone-shot" }
     },
     {
@@ -95,14 +100,14 @@ curl -X POST http://localhost:5173/api/render/batch \
       "layout": "tilt-right",
       "phoneFrame": "android-punch-hole",
       "background": { "type": "gradient", "id": "sunset-pink" },
-      "texts": { "title": "Screen 1" },
+      "textOverlays": [{ "text": "Screen 1", "anchor": "top-left", "fontSize": 0.07, "weight": 800 }],
       "imageRefs": { "screenshot": "android-shot" }
     },
     {
       "assetType": "feature-graphic",
       "layout": "logo-center",
       "background": { "type": "gradient", "id": "emerald" },
-      "texts": { "tagline": "My App", "subtitle": "A great app" },
+      "textOverlays": [{ "text": "My App", "anchor": "bottom-center", "fontSize": 0.1, "weight": 800 }],
       "imageRefs": { "logo": "applogo" }
     }
   ]' \
@@ -122,8 +127,6 @@ Use `imageRefs` to map config image inputs (e.g. `screenshot`, `logo`, `icon`) t
 | `sizeId` | string | Size variant. Defaults to first size of the asset type. |
 | `layout` | string | Layout id. Defaults to first layout. |
 | `background` | object | `{ type: "gradient" \| "solid" \| "pattern", id: "preset-id" }` |
-| `texts` | object | Key/value pairs matching the asset type's text inputs (e.g. `title`, `subtitle`, `tagline`, `headline`) |
-| `fonts` | object | `{ title: "Font Family", subtitle: "Font Family" }` — any Google Font. Defaults: Montserrat / Open Sans |
 | `phoneFrame` | string | `iphone-dynamic-island`, `iphone-notch`, `ipad`, `android-punch-hole`, `android-clean`, `frameless`. Each screenshot asset type has its own default. |
 | `transforms` | object | `{ phone: { x, y, scale, rotation }, logo: { x, y, scale, rotation } }` — position/size/rotation tweaks |
 | `textOverlays` | array | Free-form text drawn on top of any asset. See **Text Overlays** below. |

@@ -102,11 +102,6 @@ export async function GET() {
 				color: 'string (optional) — override overlay color, defaults to white on dark / black on light',
 				opacity: 'number (optional) — override opacity, defaults to 0.08 on dark / 0.06 on light'
 			},
-			texts: 'object — key/value pairs matching the asset type inputs (e.g. { title, subtitle })',
-			fonts: {
-				title: 'string — Google Font family name (default: Montserrat)',
-				subtitle: 'string — Google Font family name (default: Open Sans)'
-			},
 			phoneFrame: {
 				options: ['iphone-dynamic-island', 'iphone-notch', 'ipad', 'android-punch-hole', 'android-clean', 'frameless'],
 				note: 'Each screenshot asset type has its own defaultPhoneFrame and allowedPhoneFrames — use those to pick frame.'
@@ -156,41 +151,33 @@ export async function GET() {
 				assetType: 'iphone-screenshot',
 				layout: 'tilt-right',
 				background: { type: 'gradient', id: 'sunset-pink' },
-				texts: { title: 'My App', subtitle: 'Best app ever' },
-				phoneFrame: 'iphone-dynamic-island'
+				phoneFrame: 'iphone-dynamic-island',
+				textOverlays: [
+					{ text: 'My App', anchor: 'top-left', fontSize: 0.07, weight: 800 },
+					{ text: 'Best app ever', anchor: 'top-left', offsetY: 0.08, fontSize: 0.04 }
+				]
 			},
 			androidPhone: {
 				assetType: 'android-phone-screenshot',
 				layout: 'hero-center',
 				background: { type: 'gradient', id: 'midnight-purple' },
 				pattern: { id: 'dots' },
-				texts: { title: 'Amazing App', subtitle: 'Download now' },
-				fonts: { title: 'Bebas Neue', subtitle: 'Lato' },
 				phoneFrame: 'android-punch-hole',
-				transforms: { phone: { x: 0, y: -5, scale: 1.1, rotation: 0 } }
-			},
-			meshWithPattern: {
-				assetType: 'iphone-screenshot',
-				layout: 'float-up',
-				background: { type: 'mesh', id: 'aurora' },
-				pattern: { id: 'soft-grid' },
-				texts: { title: 'Hello World', subtitle: 'Mesh + pattern overlay' },
-				phoneFrame: 'iphone-dynamic-island'
-			},
-			ipad: {
-				assetType: 'ipad-screenshot',
-				layout: 'float-up',
-				background: { type: 'gradient', id: 'ocean' },
-				texts: { title: 'Tablet App', subtitle: 'Optimized for iPad' },
-				phoneFrame: 'ipad'
+				transforms: { phone: { x: 0, y: -5, scale: 1.1, rotation: 0 } },
+				textOverlays: [
+					{ text: 'Amazing App', anchor: 'top-center', font: 'Bebas Neue', fontSize: 0.08 },
+					{ text: 'Download now', anchor: 'bottom-center', font: 'Lato', fontSize: 0.04 }
+				]
 			},
 			featureGraphic: {
 				assetType: 'feature-graphic',
 				layout: 'logo-center',
 				background: { type: 'gradient', id: 'blue-violet' },
-				texts: { tagline: 'Your Tagline', subtitle: 'A short description' }
+				textOverlays: [
+					{ text: 'Your Tagline', anchor: 'bottom-center', fontSize: 0.1, weight: 800 }
+				]
 			},
-			withTextOverlays: {
+			multipleOverlays: {
 				assetType: 'iphone-screenshot',
 				layout: 'tilt-right',
 				background: { type: 'gradient', id: 'sunset-pink' },
@@ -208,8 +195,8 @@ export async function GET() {
 			icon: 'Image file — used by app-icon-showcase'
 		},
 		curlExamples: [
-			'curl -X POST http://localhost:3000/api/render -H "Content-Type: application/json" -d \'{"assetType":"iphone-screenshot","layout":"tilt-right","background":{"type":"gradient","id":"sunset-pink"},"texts":{"title":"Hello World"}}\' --output mockup.png',
-			'curl -X POST http://localhost:3000/api/render -F \'config={"assetType":"android-phone-screenshot","layout":"hero-center","phoneFrame":"android-punch-hole","texts":{"title":"My App"}}\' -F screenshot=@screenshot.png --output mockup.png'
+			'curl -X POST http://localhost:3000/api/render -H "Content-Type: application/json" -d \'{"assetType":"iphone-screenshot","layout":"tilt-right","background":{"type":"gradient","id":"sunset-pink"},"textOverlays":[{"text":"Hello World","anchor":"top-center","fontSize":0.07,"weight":800}]}\' --output mockup.png',
+			'curl -X POST http://localhost:3000/api/render -F \'config={"assetType":"android-phone-screenshot","layout":"hero-center","phoneFrame":"android-punch-hole","textOverlays":[{"text":"My App","anchor":"top-center","fontSize":0.07}]}\' -F screenshot=@screenshot.png --output mockup.png'
 		]
 	};
 

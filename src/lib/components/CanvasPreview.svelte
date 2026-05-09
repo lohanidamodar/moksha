@@ -59,8 +59,6 @@
 			layout: resolved.baseLayout,
 			background: editor.background,
 			pattern: editor.pattern,
-			texts: { ...editor.texts },
-			fonts: { ...editor.fonts },
 			phoneFrame: editor.phoneFrame,
 			transforms: resolved.transforms,
 			images: { ...editor.images },

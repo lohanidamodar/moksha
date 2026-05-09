@@ -6,8 +6,6 @@ const DEFAULTS = {
 	layout: 'tilt-right',
 	background: { type: 'gradient', id: 'sunset-pink' },
 	pattern: null,
-	texts: { title: '', subtitle: '' },
-	fonts: { title: 'Montserrat', subtitle: 'Open Sans' },
 	phoneFrame: 'iphone-dynamic-island',
 	images: { screenshot: null },
 	textOverlays: [],
@@ -50,8 +48,6 @@ class EditorState {
 	layout = $state(DEFAULTS.layout);
 	background = $state({ ...DEFAULTS.background });
 	pattern = $state(DEFAULTS.pattern);
-	texts = $state({ ...DEFAULTS.texts });
-	fonts = $state({ ...DEFAULTS.fonts });
 	phoneFrame = $state(DEFAULTS.phoneFrame);
 	// Keyed by `${layout}::${sizeId}` — each layout+size combo has its own transforms
 	layoutTransforms = $state({});
@@ -113,8 +109,6 @@ class EditorState {
 		this.layout = DEFAULTS.layout;
 		this.background = { ...DEFAULTS.background };
 		this.pattern = DEFAULTS.pattern;
-		this.texts = { ...DEFAULTS.texts };
-		this.fonts = { ...DEFAULTS.fonts };
 		this.phoneFrame = DEFAULTS.phoneFrame;
 		this.layoutTransforms = {};
 		this.images = { ...DEFAULTS.images };
@@ -129,8 +123,6 @@ class EditorState {
 		this.layout = item.layout;
 		this.background = { ...item.background };
 		this.pattern = item.pattern ? { ...item.pattern } : null;
-		this.texts = { ...item.texts };
-		this.fonts = { ...(item.fonts ?? DEFAULTS.fonts) };
 		this.phoneFrame = item.phoneFrame ?? DEFAULTS.phoneFrame;
 		// Restore layoutTransforms — handle both old (per-layout) and new (per-layout+size) shapes
 		if (item.layoutTransforms) {

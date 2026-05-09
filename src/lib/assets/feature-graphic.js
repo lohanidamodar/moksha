@@ -1,9 +1,8 @@
 /**
  * Feature Graphic — Play Store 1024x500 banner with logo, tagline, and subtitle.
  */
-import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
+import { renderBackgroundAndPattern } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
-import { drawText } from '$lib/renderer/canvas.js';
 import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
 
 /**
@@ -13,54 +12,25 @@ import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
 function getLayoutData(layout, w, h) {
 	switch (layout) {
 		case 'logo-left':
-			return {
-				logo: { x: w * 0.18, y: h * 0.5, size: h * 0.45 },
-				tagline: { x: w * 0.42, y: h * 0.38, align: 'left' },
-				subtitle: { x: w * 0.42, y: h * 0.62, align: 'left' },
-				phone: null
-			};
+			return { logo: { x: w * 0.18, y: h * 0.5, size: h * 0.45 }, phone: null };
 		case 'logo-center':
-			return {
-				logo: { x: w * 0.5, y: h * 0.35, size: h * 0.35 },
-				tagline: { x: w * 0.5, y: h * 0.7, align: 'center' },
-				subtitle: { x: w * 0.5, y: h * 0.86, align: 'center' },
-				phone: null
-			};
+			return { logo: { x: w * 0.5, y: h * 0.35, size: h * 0.35 }, phone: null };
 		case 'logo-right':
-			return {
-				logo: { x: w * 0.82, y: h * 0.5, size: h * 0.45 },
-				tagline: { x: w * 0.58, y: h * 0.38, align: 'right' },
-				subtitle: { x: w * 0.58, y: h * 0.62, align: 'right' },
-				phone: null
-			};
+			return { logo: { x: w * 0.82, y: h * 0.5, size: h * 0.45 }, phone: null };
 		case 'split-half':
-			return {
-				logo: { x: w * 0.25, y: h * 0.5, size: h * 0.5 },
-				tagline: { x: w * 0.65, y: h * 0.4, align: 'center' },
-				subtitle: { x: w * 0.65, y: h * 0.62, align: 'center' },
-				phone: null
-			};
+			return { logo: { x: w * 0.25, y: h * 0.5, size: h * 0.5 }, phone: null };
 		case 'logo-phone':
 			return {
 				logo: { x: w * 0.08, y: h * 0.18, size: h * 0.16 },
-				tagline: { x: w * 0.08, y: h * 0.48, align: 'left' },
-				subtitle: { x: w * 0.08, y: h * 0.68, align: 'left' },
 				phone: { x: w * 0.78, y: h * 0.55, pw: w * 0.22, ph: h * 0.75 }
 			};
 		case 'phone-center':
 			return {
 				logo: { x: w * 0.12, y: h * 0.22, size: h * 0.2 },
-				tagline: { x: w * 0.12, y: h * 0.55, align: 'left' },
-				subtitle: { x: w * 0.12, y: h * 0.75, align: 'left' },
 				phone: { x: w * 0.65, y: h * 0.5, pw: w * 0.2, ph: h * 0.8 }
 			};
 		default:
-			return {
-				logo: { x: w * 0.5, y: h * 0.35, size: h * 0.35 },
-				tagline: { x: w * 0.5, y: h * 0.7, align: 'center' },
-				subtitle: { x: w * 0.5, y: h * 0.86, align: 'center' },
-				phone: null
-			};
+			return { logo: { x: w * 0.5, y: h * 0.35, size: h * 0.35 }, phone: null };
 	}
 }
 
@@ -100,51 +70,17 @@ function drawLogo(ctx, img, cx, cy, size, rotation = 0) {
 function render(ctx, config, baseW, baseH) {
 	const w = baseW;
 	const h = baseH;
-	const titleFont = config.fonts?.title || 'Inter';
-	const subtitleFont = config.fonts?.subtitle || 'Inter';
-	const tone = getBackgroundTone(config.background);
-	const titleColor = tone === 'light' ? '#1a1a1f' : '#ffffff';
-	const subtitleColor = tone === 'light' ? 'rgba(26,26,31,0.75)' : 'rgba(255,255,255,0.8)';
-	const shadowColor = tone === 'light' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
 
-	// 1. Background
 	renderBackgroundAndPattern(ctx, w, h, config.background, config.pattern);
 
-	// 2. Layout data
 	const ld = getLayoutData(config.layout, w, h);
 
-	// 3. Logo (with transform offsets)
 	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1, rotation: 0 };
 	const logoX = ld.logo.x + (lt.x / 100) * w;
 	const logoY = ld.logo.y + (lt.y / 100) * h;
 	const logoSize = ld.logo.size * lt.scale;
 	drawLogo(ctx, config.images?.logo ?? null, logoX, logoY, logoSize, lt.rotation || 0);
 
-	// 4. Tagline
-	const tagline = config.texts?.tagline || '';
-	if (tagline) {
-		const fontSize = Math.round(h * 0.1);
-		drawText(ctx, tagline, ld.tagline.x, ld.tagline.y, {
-			font: `800 ${fontSize}px "${titleFont}", sans-serif`,
-			color: titleColor,
-			align: ld.tagline.align,
-			shadow: { color: shadowColor, blur: 16, offsetY: 3 }
-		});
-	}
-
-	// 5. Subtitle
-	const subtitle = config.texts?.subtitle || '';
-	if (subtitle) {
-		const fontSize = Math.round(h * 0.06);
-		drawText(ctx, subtitle, ld.subtitle.x, ld.subtitle.y, {
-			font: `600 ${fontSize}px "${subtitleFont}", sans-serif`,
-			color: subtitleColor,
-			align: ld.subtitle.align,
-			shadow: { color: shadowColor, blur: 12, offsetY: 2 }
-		});
-	}
-
-	// 6. Phone frame with optional screenshot (with transform)
 	if (ld.phone && config.images?.screenshot) {
 		const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1 };
 		drawPhoneFrame(
@@ -172,9 +108,7 @@ export default {
 	],
 	inputs: [
 		{ id: 'logo', type: 'image', label: 'Logo', placeholder: 'Upload your app logo' },
-		{ id: 'screenshot', type: 'image', label: 'Screenshot (optional)', placeholder: 'Upload a screenshot' },
-		{ id: 'tagline', type: 'text', label: 'Tagline', placeholder: 'Your catchy tagline' },
-		{ id: 'subtitle', type: 'text', label: 'Subtitle', placeholder: 'A short description' }
+		{ id: 'screenshot', type: 'image', label: 'Screenshot (optional)', placeholder: 'Upload a screenshot' }
 	],
 	layouts: [
 		{ id: 'logo-left', label: 'Logo Left' },
