@@ -13,8 +13,8 @@ export default {
 		'iphone-dynamic-island-gold',
 		'iphone-notch',
 		'iphone-notch-white',
-		'floating',
-		'frameless'
+		'frameless',
+		'frameless-bordered'
 	],
 	sizes: [
 		{ id: 'ios-6.7', label: 'iPhone 6.7" (1290x2796)', w: 1290, h: 2796, platform: 'ios' },

@@ -17,8 +17,8 @@ export default {
 		'android-waterdrop',
 		'android-punch-hole',
 		'android-clean',
-		'floating',
-		'frameless'
+		'frameless',
+		'frameless-bordered'
 	],
 	sizes: [
 		{ id: 'android-phone', label: 'Android Phone (1080x1920)', w: 1080, h: 1920, platform: 'android' }

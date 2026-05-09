@@ -6,7 +6,7 @@ export default {
 	icon: '📲',
 	platform: 'ios',
 	defaultPhoneFrame: 'ipad',
-	allowedPhoneFrames: ['ipad', 'ipad-silver', 'ipad-gold', 'floating', 'frameless'],
+	allowedPhoneFrames: ['ipad', 'ipad-silver', 'ipad-gold', 'frameless', 'frameless-bordered'],
 	sizes: [
 		{ id: 'ipad-12.9', label: 'iPad Pro 12.9" (2048x2732)', w: 2048, h: 2732, platform: 'ios' },
 		{ id: 'ipad-10.5', label: 'iPad 10.5" (1668x2224)', w: 1668, h: 2224, platform: 'ios' }

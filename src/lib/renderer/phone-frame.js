@@ -47,8 +47,8 @@ export const PHONE_FRAMES = [
 	{ id: 'android-punch-hole', label: 'Android Punch Hole', platform: 'android' },
 	{ id: 'android-clean', label: 'Android Clean', platform: 'android' },
 	// Universal
-	{ id: 'floating', label: 'Floating Screen', platform: 'any' },
 	{ id: 'frameless', label: 'Frameless', platform: 'any' },
+	{ id: 'frameless-bordered', label: 'Frameless (Bordered)', platform: 'any' },
 ];
 
 /** Look up body colors for a frame style. */
@@ -302,10 +302,16 @@ function getGalaxy(l, t, w, h, cr) {
 	return { screen, overlay };
 }
 
-/** Floating — just a screen with a soft drop shadow, no body */
-function getFloating(l, t, w, h, cr) {
+/** Frameless Bordered — screen with a thin border outline drawn over its edge */
+function getFramelessBordered(l, t, w, h, cr) {
 	const screen = { sx: l, sy: t, sw: w, sh: h, sr: cr };
-	return { screen, overlay: null };
+	function overlay(ctx) {
+		roundRect(ctx, l, t, w, h, cr);
+		ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+		ctx.lineWidth = Math.max(2, w * 0.004);
+		ctx.stroke();
+	}
+	return { screen, overlay };
 }
 
 /** OnePlus / Nothing-style — punch-hole camera in the top-left corner */
@@ -366,9 +372,7 @@ function getAndroidWaterdrop(l, t, w, h, cr) {
  * Draws a phone frame with the specified style.
  */
 export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screenshotImg, frameStyle = 'iphone-notch') {
-	const isFrameless = frameStyle === 'frameless';
-	const isFloating = frameStyle === 'floating';
-	const isBodyless = isFrameless || isFloating;
+	const isBodyless = frameStyle === 'frameless' || frameStyle === 'frameless-bordered';
 
 	const cr = isBodyless ? w * 0.03 : w * 0.05;
 
@@ -380,9 +384,8 @@ export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screensho
 	const l = -w / 2;
 	const t = -h / 2;
 
-	// 1. Shadow
-	if (isFloating) {
-		// Softer, larger shadow for floating screens
+	// 1. Shadow — bodyless variants use a softer, larger shadow
+	if (isBodyless) {
 		ctx.save();
 		ctx.shadowColor = 'rgba(0,0,0,0.4)';
 		ctx.shadowBlur = w * 0.08;
@@ -411,8 +414,8 @@ export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screensho
 		case 'galaxy': frame = getGalaxy(l, t, w, h, cr); break;
 		case 'oneplus': frame = getOnePlus(l, t, w, h, cr); break;
 		case 'android-waterdrop': frame = getAndroidWaterdrop(l, t, w, h, cr); break;
-		case 'floating': frame = getFloating(l, t, w, h, cr); break;
 		case 'frameless': frame = getFrameless(l, t, w, h, cr); break;
+		case 'frameless-bordered': frame = getFramelessBordered(l, t, w, h, cr); break;
 		case 'iphone-notch':
 		default: frame = getIPhoneNotch(l, t, w, h, cr); break;
 	}
