@@ -94,7 +94,8 @@ export async function GET() {
 			layout: 'string — layout id (defaults to first layout)',
 			background: {
 				type: 'gradient | mesh | solid',
-				id: 'string — preset id (e.g. "sunset-pink", "aurora", "navy")'
+				id: 'string — preset id (e.g. "sunset-pink", "aurora", "navy"). Use "custom" with type "solid" to specify your own color.',
+				color: 'string (custom solid only) — hex color (e.g. "#7c3aed"). Required when id is "custom".'
 			},
 			pattern: {
 				note: 'Optional texture overlay drawn on top of the background. Pass null for no pattern.',
@@ -187,6 +188,13 @@ export async function GET() {
 					{ text: 'Tap to start', anchor: 'bottom-center', font: 'Inter', fontSize: 0.04 },
 					{ text: 'Custom\nplacement', x: 0.18, y: 0.4, align: 'left', font: 'Montserrat', weight: 800, fontSize: 0.07 }
 				]
+			},
+			customColor: {
+				assetType: 'iphone-screenshot',
+				layout: 'hero-center',
+				background: { type: 'solid', id: 'custom', color: '#7c3aed' },
+				phoneFrame: 'iphone-dynamic-island',
+				textOverlays: [{ text: 'Your brand color', anchor: 'top-center', fontSize: 0.06 }]
 			}
 		},
 		imageFields: {

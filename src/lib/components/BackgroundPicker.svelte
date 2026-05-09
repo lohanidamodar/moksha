@@ -18,6 +18,16 @@
 		editor.background = { type, id };
 	}
 
+	let customColor = $derived(
+		editor.background.type === 'solid' && editor.background.id === 'custom' && editor.background.color
+			? editor.background.color
+			: '#3b82f6'
+	);
+
+	function selectCustomColor(color) {
+		editor.background = { type: 'solid', id: 'custom', color };
+	}
+
 	function meshSwatchStyle(m) {
 		// Build a CSS approximation of the mesh: base + radial gradients
 		const radials = m.blobs
@@ -74,6 +84,25 @@
 					onclick={() => select('solid', s.id)}
 				></button>
 			{/each}
+			<!-- Custom color swatch -->
+			<label
+				class="swatch custom-swatch"
+				class:selected={isSelected('solid', 'custom')}
+				style="background: {customColor}"
+				title="Custom color"
+			>
+				<input
+					type="color"
+					value={customColor}
+					oninput={(e) => selectCustomColor(e.target.value)}
+				/>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M12 19l7-7 3 3-7 7-3-3z"/>
+					<path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+					<path d="M2 2l7.586 7.586"/>
+					<circle cx="11" cy="11" r="2"/>
+				</svg>
+			</label>
 		{/if}
 	</div>
 </div>
@@ -138,5 +167,30 @@
 	.swatch.selected {
 		border-color: var(--accent, #f97316);
 		box-shadow: 0 0 0 1px var(--accent, #f97316);
+	}
+
+	.custom-swatch {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: rgba(255, 255, 255, 0.85);
+		mix-blend-mode: normal;
+		position: relative;
+		filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+	}
+
+	.custom-swatch input[type="color"] {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		cursor: pointer;
+		border: none;
+		padding: 0;
+	}
+
+	.custom-swatch svg {
+		width: 50%;
+		height: 50%;
+		pointer-events: none;
 	}
 </style>

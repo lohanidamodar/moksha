@@ -226,8 +226,23 @@ export function getPatternById(id) {
 	return PATTERNS.find((p) => p.id === id);
 }
 
+/** Compute a tone (light | dark) from a hex color using relative luminance. */
+export function getColorTone(hex) {
+	if (!hex) return 'dark';
+	const c = hex.replace('#', '');
+	if (c.length !== 6) return 'dark';
+	const r = parseInt(c.slice(0, 2), 16) / 255;
+	const g = parseInt(c.slice(2, 4), 16) / 255;
+	const b = parseInt(c.slice(4, 6), 16) / 255;
+	const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+	return luminance > 0.55 ? 'light' : 'dark';
+}
+
 /** Returns the tone (light | dark) for a background, defaults to dark. */
 export function getBackgroundTone(background) {
+	if (background?.type === 'solid' && background.id === 'custom' && background.color) {
+		return getColorTone(background.color);
+	}
 	const preset = getBackgroundById(background?.type, background?.id);
 	return preset?.tone ?? 'dark';
 }
@@ -244,6 +259,12 @@ export function getBackgroundTone(background) {
  * @param {{ type: string, id: string }} background
  */
 export function renderBackground(ctx, w, h, background) {
+	// Custom solid color (no preset)
+	if (background?.type === 'solid' && background.id === 'custom' && background.color) {
+		_renderSolid(ctx, w, h, background.color, getColorTone(background.color));
+		return;
+	}
+
 	const preset = getBackgroundById(background?.type, background?.id);
 	if (!preset) {
 		ctx.fillStyle = '#0f0f11';
