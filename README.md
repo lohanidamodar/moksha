@@ -126,8 +126,9 @@ Use `imageRefs` to map config image inputs (e.g. `screenshot`, `logo`, `icon`) t
 | `assetType` | string (required) | One of: `iphone-screenshot`, `ipad-screenshot`, `android-phone-screenshot`, `android-tablet-screenshot`, `feature-graphic`, `promo-banner`, `app-icon-showcase`, `social-card` |
 | `sizeId` | string | Size variant. Defaults to first size of the asset type. |
 | `layout` | string | Layout id. Defaults to first layout. |
-| `background` | object | `{ type: "gradient" \| "solid" \| "pattern", id: "preset-id" }` |
-| `phoneFrame` | string | `iphone-dynamic-island`, `iphone-notch`, `ipad`, `android-punch-hole`, `android-clean`, `frameless`. Each screenshot asset type has its own default. |
+| `background` | object | `{ type: "gradient" \| "mesh" \| "solid", id: "preset-id" }`. For a custom color, use `{ type: "solid", id: "custom", color: "#hex" }`. |
+| `pattern` | object \| null | Optional texture overlay drawn on top of the background: `{ id: "dots" }`. Pass `null` for no pattern. Optional `color` and `opacity` overrides. |
+| `phoneFrame` | string | See **Phone Frames** below. Each screenshot asset type has its own default and allowed frames. |
 | `transforms` | object | `{ phone: { x, y, scale, rotation }, logo: { x, y, scale, rotation } }` — position/size/rotation tweaks |
 | `textOverlays` | array | Free-form text drawn on top of any asset. See **Text Overlays** below. |
 | `imageRefs` | object | Batch only. Maps input ids to uploaded form field names: `{ "screenshot": "myfield" }` |
@@ -170,17 +171,32 @@ curl -X POST http://localhost:5173/api/render \
   --output mockup.png
 ```
 
-### Allowed Phone Frames Per Asset Type
+### Phone Frames
+
+21 frame styles across iOS, Android, and universal:
+
+**iPhone (6):** `iphone-dynamic-island`, `iphone-dynamic-island-white`, `iphone-dynamic-island-natural`, `iphone-dynamic-island-gold`, `iphone-notch`, `iphone-notch-white`
+
+**iPad (3):** `ipad` (Space Gray), `ipad-silver`, `ipad-gold`
+
+**Android (10):**
+- Pixel: `pixel` (Cream), `pixel-black` (Obsidian), `pixel-white` (Porcelain) — with horizontal camera bar
+- Galaxy: `galaxy` (Titanium), `galaxy-black` (Phantom Black), `galaxy-white` (Phantom White) — centered punch hole
+- Other: `oneplus` (corner punch hole), `android-waterdrop` (teardrop notch), `android-punch-hole`, `android-clean`
+
+**Universal (2):** `frameless` (no body, soft shadow only), `frameless-bordered` (no body + thin auto-contrast outline)
+
+#### Allowed Per Asset Type
 
 | Asset Type | Allowed Frames |
 |---|---|
-| iphone-screenshot | iphone-dynamic-island, iphone-notch, frameless |
-| ipad-screenshot | ipad, frameless |
-| android-phone-screenshot | android-punch-hole, android-clean, frameless |
-| android-tablet-screenshot | android-clean, android-punch-hole, frameless |
+| iphone-screenshot | All iPhone variants + frameless / frameless-bordered |
+| ipad-screenshot | All iPad variants + frameless / frameless-bordered |
+| android-phone-screenshot | Pixel/Galaxy color variants, OnePlus, Waterdrop, Punch Hole, Clean + frameless / frameless-bordered |
+| android-tablet-screenshot | Galaxy color variants, Punch Hole, Clean + frameless / frameless-bordered |
 | promo-banner, social-card | any (only used when a screenshot is provided) |
 
-The API will accept any `phoneFrame` value, but for best results pick one from the asset type's `allowedPhoneFrames` (returned by `GET /api/render`).
+The API accepts any `phoneFrame` value, but for best results pick from the asset type's `allowedPhoneFrames` returned by `GET /api/render`.
 
 ### Image Fields (multipart)
 
@@ -196,13 +212,46 @@ All four screenshot asset types share the same 10 layouts: `tilt-right`, `left-t
 
 `split-left` + `split-right` are designed as a side-by-side pair — when placed next to each other in your store listing they form one continuous phone visual.
 
-### Background Presets
+### Backgrounds and Patterns
 
-**Gradients:** `sunset-pink`, `blue-violet`, `emerald`, `hot-magenta`, `ocean`, `indigo-dream`, `amber`, `dark-teal`, `red-orange`, `midnight-blue`
+Background and pattern are independent layers — pick any pattern over any background.
 
-**Solids:** `pure-black`, `dark-charcoal`, `navy`, `forest-green`, `deep-purple`, `crimson`, `slate`, `white`
+#### Gradients (19) — `{ "type": "gradient", "id": "..." }`
 
-**Patterns:** `dots`, `waves`, `mesh`, `geometric`, `noise`, `circles`
+**Vibrant:** `sunset-pink`, `blue-violet`, `emerald`, `hot-magenta`, `ocean`, `indigo-dream`, `amber`, `red-orange`
+
+**Sophisticated dark:** `dark-teal`, `midnight-blue`, `space-gray`, `deep-ocean`, `midnight-purple`, `forest-night`
+
+**Soft pastels (light):** `peachy`, `soft-pink`, `mint-cream`, `lavender-mist`, `morning-sun`
+
+#### Mesh Gradients (9) — `{ "type": "mesh", "id": "..." }`
+
+Multi-color radial blob gradients for a modern designer feel.
+
+**Dark:** `aurora`, `sunset-mesh`, `ocean-mesh`, `forest-mesh`, `rose-mesh`, `royal-mesh`
+
+**Light:** `pastel-mesh`, `cloud-mesh`, `sage-mesh`
+
+#### Solids (18 + custom) — `{ "type": "solid", "id": "..." }`
+
+**Dark:** `pure-black`, `dark-charcoal`, `navy`, `forest-green`, `deep-purple`, `crimson`, `slate`, `graphite`, `midnight-indigo`, `brand-blue`, `brand-purple`, `brand-orange`
+
+**Light:** `pure-white`, `cream`, `ivory`, `soft-gray`, `beige`, `warm-sand`
+
+**Custom:** `{ "type": "solid", "id": "custom", "color": "#7c3aed" }` — any hex color. Tone (light/dark) is auto-detected from luminance.
+
+#### Patterns (20) — `{ "id": "..." }` overlay on top of background
+
+**Tone-aware** (auto-pick light/dark overlay color based on background):
+`dots`, `soft-grid`, `grid`, `topography`, `diagonal-lines`, `vertical-lines` (pinstripes), `hex-grid`, `triangles`, `plus` (Apple-style plus marks), `stars`, `halftone`, `noise`, `circles`, `waves`, `crosshatch`, `geometric`
+
+**Decorative** (fixed colors, ignore background tone): `bokeh`, `aurora-streaks`, `confetti`, `memphis`
+
+You can override pattern color and opacity: `{ "id": "dots", "color": "#fff", "opacity": 0.12 }`.
+
+### Fonts
+
+The renderer accepts any Google Font. Common picks: `Inter`, `Montserrat`, `Open Sans`, `Bebas Neue`, `Lato`, `Poppins`, `Playfair Display`. Set via `textOverlays[].font`.
 
 ## Building
 

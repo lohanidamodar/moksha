@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import { renderAsset } from '$lib/renderer/server-canvas.js';
 import { assetTypes } from '$lib/assets/index.js';
 import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$lib/renderer/backgrounds.js';
+import { PHONE_FRAMES } from '$lib/renderer/phone-frame.js';
 import { ANCHOR_IDS } from '$lib/renderer/text-overlays.js';
 
 /**
@@ -104,8 +105,7 @@ export async function GET() {
 				opacity: 'number (optional) — override opacity, defaults to 0.08 on dark / 0.06 on light'
 			},
 			phoneFrame: {
-				options: ['iphone-dynamic-island', 'iphone-notch', 'ipad', 'android-punch-hole', 'android-clean', 'frameless'],
-				note: 'Each screenshot asset type has its own defaultPhoneFrame and allowedPhoneFrames — use those to pick frame.'
+				note: 'See availablePhoneFrames for the full list. Each screenshot asset type has its own defaultPhoneFrame and allowedPhoneFrames — use those to pick the appropriate frame.'
 			},
 			transforms: {
 				phone: { x: 'number (-50 to 50)', y: 'number (-50 to 50)', scale: 'number (0.3 to 2)', rotation: 'number (-45 to 45)' },
@@ -134,9 +134,17 @@ export async function GET() {
 		availableBackgrounds: {
 			gradient: GRADIENTS.map((g) => ({ id: g.id, label: g.label, tone: g.tone })),
 			mesh: MESH.map((m) => ({ id: m.id, label: m.label, tone: m.tone })),
-			solid: SOLIDS.map((s) => ({ id: s.id, label: s.label, tone: s.tone }))
+			solid: [
+				...SOLIDS.map((s) => ({ id: s.id, label: s.label, tone: s.tone })),
+				{ id: 'custom', label: 'Custom Color', requiresColor: true, note: 'Provide a `color` field with a hex value' }
+			]
 		},
-		availablePatterns: PATTERNS.map((p) => ({ id: p.id, label: p.label })),
+		availablePatterns: PATTERNS.map((p) => ({
+			id: p.id,
+			label: p.label,
+			fixedColors: !!p.fixedColors
+		})),
+		availablePhoneFrames: PHONE_FRAMES.map((f) => ({ id: f.id, label: f.label, platform: f.platform })),
 		assetTypeOverview: {
 			'iphone-screenshot': 'iPhone screenshot mockup. Renders 4 sizes (5.5"–6.7"). Use iPhone frames.',
 			'ipad-screenshot': 'iPad screenshot mockup. Renders 2 sizes (10.5", 12.9"). Use iPad frame.',
