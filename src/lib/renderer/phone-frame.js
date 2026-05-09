@@ -7,14 +7,62 @@ import { roundRect } from './canvas.js';
 // Frame style registry
 // ============================================================
 
+// Body color presets — gradient stops for the phone body
+const BODY_COLORS = {
+	black: ['#3a3a3e', '#2a2a2e', '#1a1a1e'],
+	titanium: ['#5a5a5e', '#3e3e42', '#2a2a2e'],
+	white: ['#f8f8f8', '#e8e8e8', '#d8d8d8'],
+	natural: ['#a89685', '#806f5e', '#5a4d40'],  // titanium natural / warm gold
+	gold: ['#e8d5a8', '#c9a878', '#8a6f4e'],
+	silver: ['#e8e8ec', '#c8c8cc', '#a0a0a4'],
+	'dark-android': ['#2a2a2e', '#1a1a1e', '#111114'],
+	'pixel-cream': ['#f0e8de', '#d6cfc4', '#a8a39a'],
+};
+
 export const PHONE_FRAMES = [
-	{ id: 'iphone-dynamic-island', label: 'iPhone (Dynamic Island)', platform: 'ios' },
-	{ id: 'iphone-notch', label: 'iPhone (Notch)', platform: 'ios' },
-	{ id: 'ipad', label: 'iPad', platform: 'ios' },
-	{ id: 'android-punch-hole', label: 'Android (Punch Hole)', platform: 'android' },
-	{ id: 'android-clean', label: 'Android (Clean)', platform: 'android' },
+	// iPhone Dynamic Island variants
+	{ id: 'iphone-dynamic-island', label: 'iPhone Black', platform: 'ios' },
+	{ id: 'iphone-dynamic-island-white', label: 'iPhone White', platform: 'ios' },
+	{ id: 'iphone-dynamic-island-natural', label: 'iPhone Natural Titanium', platform: 'ios' },
+	{ id: 'iphone-dynamic-island-gold', label: 'iPhone Gold', platform: 'ios' },
+	// iPhone Notch variants
+	{ id: 'iphone-notch', label: 'iPhone Notch (Black)', platform: 'ios' },
+	{ id: 'iphone-notch-white', label: 'iPhone Notch (White)', platform: 'ios' },
+	// iPad variants
+	{ id: 'ipad', label: 'iPad Space Gray', platform: 'ios' },
+	{ id: 'ipad-silver', label: 'iPad Silver', platform: 'ios' },
+	{ id: 'ipad-gold', label: 'iPad Gold', platform: 'ios' },
+	// Android
+	{ id: 'android-punch-hole', label: 'Android Punch Hole', platform: 'android' },
+	{ id: 'android-clean', label: 'Android Clean', platform: 'android' },
+	{ id: 'pixel', label: 'Pixel', platform: 'android' },
+	{ id: 'galaxy', label: 'Galaxy', platform: 'android' },
+	// Universal
+	{ id: 'floating', label: 'Floating Screen', platform: 'any' },
 	{ id: 'frameless', label: 'Frameless', platform: 'any' },
 ];
+
+/** Look up body colors for a frame style. */
+function getBodyColors(frameStyle) {
+	if (frameStyle === 'iphone-dynamic-island' || frameStyle === 'iphone-notch') return BODY_COLORS.black;
+	if (frameStyle === 'iphone-dynamic-island-white' || frameStyle === 'iphone-notch-white') return BODY_COLORS.white;
+	if (frameStyle === 'iphone-dynamic-island-natural') return BODY_COLORS.natural;
+	if (frameStyle === 'iphone-dynamic-island-gold') return BODY_COLORS.gold;
+	if (frameStyle === 'ipad') return BODY_COLORS.titanium;
+	if (frameStyle === 'ipad-silver') return BODY_COLORS.silver;
+	if (frameStyle === 'ipad-gold') return BODY_COLORS.gold;
+	if (frameStyle === 'pixel') return BODY_COLORS['pixel-cream'];
+	if (frameStyle === 'galaxy') return BODY_COLORS.titanium;
+	return BODY_COLORS['dark-android'];
+}
+
+/** Map a frame style to its layout-style group (for picking screen/overlay) */
+function frameGroup(frameStyle) {
+	if (frameStyle.startsWith('iphone-dynamic-island')) return 'iphone-dynamic-island';
+	if (frameStyle.startsWith('iphone-notch')) return 'iphone-notch';
+	if (frameStyle.startsWith('ipad')) return 'ipad';
+	return frameStyle;
+}
 
 // ============================================================
 // Shared helpers
@@ -186,6 +234,63 @@ function getFrameless(l, t, w, h, cr) {
 	return { screen, overlay: null };
 }
 
+/** Pixel-style — visible camera bar at top */
+function getPixel(l, t, w, h, cr) {
+	const bs = w * 0.012;
+	const bt = w * 0.07; // larger top bezel for camera bar
+	const bb = w * 0.026;
+	const screen = {
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.85
+	};
+	function overlay(ctx) {
+		// Horizontal camera bar (rounded pill near top)
+		const barW = w * 0.85, barH = w * 0.045;
+		const barX = -barW / 2, barY = t + bt - barH - w * 0.005;
+		roundRect(ctx, barX, barY, barW, barH, barH / 2);
+		ctx.fillStyle = 'rgba(0,0,0,0.7)';
+		ctx.fill();
+		// Two camera lenses on the bar
+		const lensY = barY + barH / 2;
+		ctx.fillStyle = '#0a0a0a';
+		ctx.beginPath();
+		ctx.arc(barX + barW * 0.18, lensY, barH * 0.32, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.beginPath();
+		ctx.arc(barX + barW * 0.32, lensY, barH * 0.28, 0, Math.PI * 2);
+		ctx.fill();
+		// Front camera dot at top center
+		ctx.beginPath();
+		ctx.arc(0, t + bt / 2, w * 0.008, 0, Math.PI * 2);
+		ctx.fillStyle = '#0a0a0a';
+		ctx.fill();
+	}
+	return { screen, overlay };
+}
+
+/** Galaxy-style — vertical camera array on top-right corner */
+function getGalaxy(l, t, w, h, cr) {
+	const bs = w * 0.012;
+	const bt = w * 0.026;
+	const bb = w * 0.026;
+	const screen = {
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.85
+	};
+	function overlay(ctx) {
+		// Centered top camera punch-hole
+		ctx.beginPath();
+		ctx.arc(0, t + bt + w * 0.018, w * 0.012, 0, Math.PI * 2);
+		ctx.fillStyle = '#000000';
+		ctx.fill();
+	}
+	return { screen, overlay };
+}
+
+/** Floating — just a screen with a soft drop shadow, no body */
+function getFloating(l, t, w, h, cr) {
+	const screen = { sx: l, sy: t, sw: w, sh: h, sr: cr };
+	return { screen, overlay: null };
+}
+
 // ============================================================
 // Main entry point
 // ============================================================
@@ -195,8 +300,10 @@ function getFrameless(l, t, w, h, cr) {
  */
 export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screenshotImg, frameStyle = 'iphone-notch') {
 	const isFrameless = frameStyle === 'frameless';
-	// Corner radius scales with frame width (iPhones ~5%, frameless ~3%)
-	const cr = isFrameless ? w * 0.03 : w * 0.05;
+	const isFloating = frameStyle === 'floating';
+	const isBodyless = isFrameless || isFloating;
+
+	const cr = isBodyless ? w * 0.03 : w * 0.05;
 
 	ctx.save();
 	ctx.translate(x, y);
@@ -207,23 +314,35 @@ export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screensho
 	const t = -h / 2;
 
 	// 1. Shadow
-	drawShadow(ctx, l, t, w, h, cr);
+	if (isFloating) {
+		// Softer, larger shadow for floating screens
+		ctx.save();
+		ctx.shadowColor = 'rgba(0,0,0,0.4)';
+		ctx.shadowBlur = w * 0.08;
+		ctx.shadowOffsetY = w * 0.025;
+		roundRect(ctx, l, t, w, h, cr);
+		ctx.fillStyle = '#000';
+		ctx.fill();
+		ctx.restore();
+	} else {
+		drawShadow(ctx, l, t, w, h, cr);
+	}
 
-	// 2. Body (skip for frameless)
-	if (!isFrameless) {
-		const bodyColors = frameStyle.startsWith('iphone') || frameStyle === 'ipad'
-			? ['#3a3a3e', '#2a2a2e', '#1a1a1e']
-			: ['#2a2a2e', '#1a1a1e', '#111114'];
-		drawBody(ctx, l, t, w, h, cr, bodyColors);
+	// 2. Body (skip for frameless / floating)
+	if (!isBodyless) {
+		drawBody(ctx, l, t, w, h, cr, getBodyColors(frameStyle));
 	}
 
 	// 3. Get frame config (screen area + overlay)
 	let frame;
-	switch (frameStyle) {
+	switch (frameGroup(frameStyle)) {
 		case 'iphone-dynamic-island': frame = getIPhoneDynamicIsland(l, t, w, h, cr); break;
 		case 'ipad': frame = getIPad(l, t, w, h, cr); break;
 		case 'android-punch-hole': frame = getAndroidPunchHole(l, t, w, h, cr); break;
 		case 'android-clean': frame = getAndroidClean(l, t, w, h, cr); break;
+		case 'pixel': frame = getPixel(l, t, w, h, cr); break;
+		case 'galaxy': frame = getGalaxy(l, t, w, h, cr); break;
+		case 'floating': frame = getFloating(l, t, w, h, cr); break;
 		case 'frameless': frame = getFrameless(l, t, w, h, cr); break;
 		case 'iphone-notch':
 		default: frame = getIPhoneNotch(l, t, w, h, cr); break;

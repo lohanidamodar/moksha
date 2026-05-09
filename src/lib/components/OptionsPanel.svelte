@@ -10,6 +10,7 @@
 	import FontSelector from './FontSelector.svelte';
 	import TransformControls from './TransformControls.svelte';
 	import { PHONE_FRAMES } from '$lib/renderer/phone-frame.js';
+	import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$lib/renderer/backgrounds.js';
 
 	let { generateThumbnail } = $props();
 
@@ -28,6 +29,32 @@
 
 	function deepCopy(obj) {
 		return JSON.parse(JSON.stringify(obj));
+	}
+
+	function pickRandom(arr) {
+		return arr[Math.floor(Math.random() * arr.length)];
+	}
+
+	function randomize() {
+		// Roll a random background type weighted toward gradient/mesh
+		const r = Math.random();
+		if (r < 0.4) {
+			const g = pickRandom(GRADIENTS);
+			editor.background = { type: 'gradient', id: g.id };
+		} else if (r < 0.75) {
+			const m = pickRandom(MESH);
+			editor.background = { type: 'mesh', id: m.id };
+		} else {
+			const s = pickRandom(SOLIDS);
+			editor.background = { type: 'solid', id: s.id };
+		}
+		// 60% chance of having a pattern overlay
+		if (Math.random() < 0.6) {
+			const p = pickRandom(PATTERNS);
+			editor.pattern = { id: p.id };
+		} else {
+			editor.pattern = null;
+		}
 	}
 
 	function handleAddToQueue() {
@@ -88,7 +115,19 @@
 		</section>
 
 		<section class="section">
-			<h3 class="section-title">Background</h3>
+			<div class="section-header">
+				<h3 class="section-title">Background</h3>
+				<button class="randomize-btn" onclick={randomize} title="Random background + pattern">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<polyline points="16 3 21 3 21 8"/>
+						<line x1="4" y1="20" x2="21" y2="3"/>
+						<polyline points="21 16 21 21 16 21"/>
+						<line x1="15" y1="15" x2="21" y2="21"/>
+						<line x1="4" y1="4" x2="9" y2="9"/>
+					</svg>
+					Randomize
+				</button>
+			</div>
 			<BackgroundPicker />
 		</section>
 
@@ -232,6 +271,33 @@
 		letter-spacing: 0.8px;
 		color: var(--text-secondary, #9d9baa);
 		margin: 0;
+	}
+
+	.section-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.randomize-btn {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		padding: 4px 8px;
+		border: 1px solid var(--border, #2e2e36);
+		border-radius: 6px;
+		background: transparent;
+		color: var(--text-secondary, #9d9baa);
+		font-family: var(--font, 'Inter'), sans-serif;
+		font-size: 10px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+
+	.randomize-btn:hover {
+		border-color: var(--accent, #f97316);
+		color: var(--accent, #f97316);
 	}
 
 	.format-select {
