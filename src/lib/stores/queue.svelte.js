@@ -16,6 +16,7 @@ class QueueState {
 			transforms: item.transforms ?? undefined,
 			layoutTransforms: item.layoutTransforms ?? undefined,
 			images: { ...item.images },
+			textOverlays: item.textOverlays ? structuredClone(item.textOverlays) : [],
 			thumbnail: item.thumbnail ?? null,
 			createdAt: new Date()
 		});
@@ -41,6 +42,7 @@ class QueueState {
 			background: { ...source.background },
 			texts: { ...source.texts },
 			images: { ...source.images },
+			textOverlays: source.textOverlays ? structuredClone(source.textOverlays) : [],
 			createdAt: new Date()
 		});
 	}

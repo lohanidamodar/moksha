@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import { renderAsset } from '$lib/renderer/server-canvas.js';
 import { assetTypes } from '$lib/assets/index.js';
 import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$lib/renderer/backgrounds.js';
+import { ANCHOR_IDS } from '$lib/renderer/text-overlays.js';
 
 /**
  * POST /api/render
@@ -113,6 +114,25 @@ export async function GET() {
 			transforms: {
 				phone: { x: 'number (-50 to 50)', y: 'number (-50 to 50)', scale: 'number (0.3 to 2)', rotation: 'number (-45 to 45)' },
 				logo: { x: 'number (-50 to 50)', y: 'number (-50 to 50)', scale: 'number (0.3 to 2)', rotation: 'number (-45 to 45)' }
+			},
+			textOverlays: {
+				note: 'Free-form text drawn on top of the asset. Each entry positions a single text block with its own font/size/color/alignment.',
+				type: 'array of overlay objects',
+				overlay: {
+					text: 'string — the text to draw (supports \\n for line breaks)',
+					anchor: `string (optional) — named position. One of: ${ANCHOR_IDS.join(', ')}. Use this for convenience presets like "top-left", "center", etc.`,
+					offsetX: 'number (optional, used with anchor) — fraction of canvas width to nudge from the anchor (e.g. 0.05)',
+					offsetY: 'number (optional, used with anchor) — fraction of canvas height to nudge from the anchor',
+					x: 'number (0..1) — fraction of canvas width. Used when no anchor is provided.',
+					y: 'number (0..1) — fraction of canvas height. Used when no anchor is provided.',
+					fontSize: 'number (0..1) — font size as fraction of canvas width (default 0.06)',
+					font: 'string — Google Font family (default: Inter)',
+					weight: 'number (100..900) — font weight (default 700)',
+					color: 'string (optional) — CSS color. Omit for auto-contrast against the background.',
+					align: 'string — left | center | right (defaults from anchor or to "center")',
+					rotation: 'number — degrees',
+					shadow: 'boolean — soft drop shadow for legibility (default true)'
+				}
 			}
 		},
 		availableBackgrounds: {
@@ -169,6 +189,17 @@ export async function GET() {
 				layout: 'logo-center',
 				background: { type: 'gradient', id: 'blue-violet' },
 				texts: { tagline: 'Your Tagline', subtitle: 'A short description' }
+			},
+			withTextOverlays: {
+				assetType: 'iphone-screenshot',
+				layout: 'tilt-right',
+				background: { type: 'gradient', id: 'sunset-pink' },
+				phoneFrame: 'iphone-dynamic-island',
+				textOverlays: [
+					{ text: 'NEW', anchor: 'top-right', font: 'Bebas Neue', fontSize: 0.08, color: '#ffd60a', rotation: -8 },
+					{ text: 'Tap to start', anchor: 'bottom-center', font: 'Inter', fontSize: 0.04 },
+					{ text: 'Custom\nplacement', x: 0.18, y: 0.4, align: 'left', font: 'Montserrat', weight: 800, fontSize: 0.07 }
+				]
 			}
 		},
 		imageFields: {

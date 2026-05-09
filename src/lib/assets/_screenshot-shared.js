@@ -8,6 +8,7 @@
 import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { drawText } from '$lib/renderer/canvas.js';
+import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
 
 /**
  * Returns phone and title positioning for a given layout id.
@@ -160,4 +161,6 @@ export function renderScreenshot(ctx, config, baseW, baseH) {
 			shadow: { color: shadowColor, blur: 20, offsetY: 4 }
 		});
 	}
+
+	renderTextOverlays(ctx, config.textOverlays, w, h, config);
 }

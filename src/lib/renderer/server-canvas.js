@@ -57,10 +57,14 @@ export async function renderAsset(config, imageBuffers = {}) {
 		if (found) size = found;
 	}
 
-	// Register fonts
+	// Register fonts (title/subtitle + any used by custom text overlays)
 	const titleFont = config.fonts?.title || 'Montserrat';
 	const subtitleFont = config.fonts?.subtitle || 'Open Sans';
-	await Promise.all([registerFont(titleFont), registerFont(subtitleFont)]);
+	const overlayFonts = (config.textOverlays ?? [])
+		.map((o) => o?.font)
+		.filter((f) => typeof f === 'string' && f.length > 0);
+	const fontsToRegister = new Set([titleFont, subtitleFont, ...overlayFonts]);
+	await Promise.all([...fontsToRegister].map((f) => registerFont(f)));
 
 	// Load images from buffers
 	const images = {};
@@ -82,6 +86,7 @@ export async function renderAsset(config, imageBuffers = {}) {
 		fonts: config.fonts || { title: 'Montserrat', subtitle: 'Open Sans' },
 		phoneFrame: config.phoneFrame || 'iphone-dynamic-island',
 		transforms: config.transforms || undefined,
+		textOverlays: Array.isArray(config.textOverlays) ? config.textOverlays : [],
 		images
 	}, size.w, size.h);
 

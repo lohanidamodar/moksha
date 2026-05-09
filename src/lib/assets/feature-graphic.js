@@ -4,6 +4,7 @@
 import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { drawText } from '$lib/renderer/canvas.js';
+import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
 
 /**
  * Returns positioning data for each layout.
@@ -158,6 +159,8 @@ function render(ctx, config, baseW, baseH) {
 			config.phoneFrame
 		);
 	}
+
+	renderTextOverlays(ctx, config.textOverlays, w, h, config);
 }
 
 export default {

@@ -9,6 +9,7 @@
 	import ImageSelector from './ImageSelector.svelte';
 	import FontSelector from './FontSelector.svelte';
 	import TransformControls from './TransformControls.svelte';
+	import TextOverlaysPanel from './TextOverlaysPanel.svelte';
 	import { PHONE_FRAMES } from '$lib/renderer/phone-frame.js';
 	import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$lib/renderer/backgrounds.js';
 
@@ -71,6 +72,7 @@
 			phoneFrame: editor.phoneFrame,
 			layoutTransforms: deepCopy(editor.layoutTransforms),
 			images: { ...editor.images },
+			textOverlays: deepCopy(editor.textOverlays),
 			thumbnail
 		};
 
@@ -216,6 +218,11 @@
 				</div>
 			</section>
 		{/if}
+
+		<section class="section">
+			<h3 class="section-title">Custom Text</h3>
+			<TextOverlaysPanel />
+		</section>
 	</div>
 
 	<div class="panel-footer">

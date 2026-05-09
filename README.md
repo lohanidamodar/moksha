@@ -126,7 +126,46 @@ Use `imageRefs` to map config image inputs (e.g. `screenshot`, `logo`, `icon`) t
 | `fonts` | object | `{ title: "Font Family", subtitle: "Font Family" }` — any Google Font. Defaults: Montserrat / Open Sans |
 | `phoneFrame` | string | `iphone-dynamic-island`, `iphone-notch`, `ipad`, `android-punch-hole`, `android-clean`, `frameless`. Each screenshot asset type has its own default. |
 | `transforms` | object | `{ phone: { x, y, scale, rotation }, logo: { x, y, scale, rotation } }` — position/size/rotation tweaks |
+| `textOverlays` | array | Free-form text drawn on top of any asset. See **Text Overlays** below. |
 | `imageRefs` | object | Batch only. Maps input ids to uploaded form field names: `{ "screenshot": "myfield" }` |
+
+### Text Overlays
+
+Add arbitrary text on top of any asset. Each overlay is fully independent — its own font, size, color, position, alignment, and rotation. Two ways to position:
+
+- **Named anchor (convenience):** `top-left`, `top-center`, `top-right`, `center-left`, `center`, `center-right`, `bottom-left`, `bottom-center`, `bottom-right`. Each anchor sets a sensible default text alignment.
+- **Numeric coordinates:** `x` and `y` as fractions of the canvas (`0` = left/top, `1` = right/bottom).
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `text` | string | — | Text to render. Use `\n` for line breaks. |
+| `anchor` | string | — | One of the named anchors above. Use this OR `x`/`y`. |
+| `offsetX`, `offsetY` | number | 0 | Optional nudge from the anchor, as fraction of canvas. |
+| `x`, `y` | number (0..1) | 0.5 | Position when no `anchor` is set. |
+| `fontSize` | number (0..1) | 0.06 | Font size as fraction of canvas width. |
+| `font` | string | Inter | Any Google Font family name. |
+| `weight` | number | 700 | 100–900. |
+| `color` | string | auto | CSS color. Omit for auto-contrast against the background. |
+| `align` | string | inherits | `left` \| `center` \| `right`. |
+| `rotation` | number | 0 | Degrees. |
+| `shadow` | boolean | true | Soft drop shadow for legibility. |
+
+```sh
+curl -X POST http://localhost:5173/api/render \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assetType": "iphone-screenshot",
+    "layout": "tilt-right",
+    "background": { "type": "gradient", "id": "sunset-pink" },
+    "phoneFrame": "iphone-dynamic-island",
+    "textOverlays": [
+      { "text": "NEW", "anchor": "top-right", "font": "Bebas Neue", "fontSize": 0.08, "color": "#ffd60a", "rotation": -8 },
+      { "text": "Tap to start", "anchor": "bottom-center", "fontSize": 0.04 },
+      { "text": "Custom\nplacement", "x": 0.18, "y": 0.4, "align": "left", "font": "Montserrat", "weight": 800, "fontSize": 0.07 }
+    ]
+  }' \
+  --output mockup.png
+```
 
 ### Allowed Phone Frames Per Asset Type
 

@@ -66,7 +66,8 @@ export async function renderToBlob(queueItem, size) {
 			fonts: queueItem.fonts,
 			phoneFrame: queueItem.phoneFrame,
 			transforms: resolved.transforms,
-			images: queueItem.images
+			images: queueItem.images,
+			textOverlays: queueItem.textOverlays
 		},
 		size.w,
 		size.h
