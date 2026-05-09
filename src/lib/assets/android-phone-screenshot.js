@@ -6,7 +6,20 @@ export default {
 	icon: '🤖',
 	platform: 'android',
 	defaultPhoneFrame: 'android-punch-hole',
-	allowedPhoneFrames: ['pixel', 'galaxy', 'android-punch-hole', 'android-clean', 'floating', 'frameless'],
+	allowedPhoneFrames: [
+		'pixel',
+		'pixel-black',
+		'pixel-white',
+		'galaxy',
+		'galaxy-black',
+		'galaxy-white',
+		'oneplus',
+		'android-waterdrop',
+		'android-punch-hole',
+		'android-clean',
+		'floating',
+		'frameless'
+	],
 	sizes: [
 		{ id: 'android-phone', label: 'Android Phone (1080x1920)', w: 1080, h: 1920, platform: 'android' }
 	],

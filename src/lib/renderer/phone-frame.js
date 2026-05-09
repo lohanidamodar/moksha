@@ -17,6 +17,7 @@ const BODY_COLORS = {
 	silver: ['#e8e8ec', '#c8c8cc', '#a0a0a4'],
 	'dark-android': ['#2a2a2e', '#1a1a1e', '#111114'],
 	'pixel-cream': ['#f0e8de', '#d6cfc4', '#a8a39a'],
+	'graphite': ['#2c2c2e', '#1c1c1e', '#0e0e10'],
 };
 
 export const PHONE_FRAMES = [
@@ -32,11 +33,19 @@ export const PHONE_FRAMES = [
 	{ id: 'ipad', label: 'iPad Space Gray', platform: 'ios' },
 	{ id: 'ipad-silver', label: 'iPad Silver', platform: 'ios' },
 	{ id: 'ipad-gold', label: 'iPad Gold', platform: 'ios' },
-	// Android
+	// Android — Pixel
+	{ id: 'pixel', label: 'Pixel Cream', platform: 'android' },
+	{ id: 'pixel-black', label: 'Pixel Obsidian', platform: 'android' },
+	{ id: 'pixel-white', label: 'Pixel Porcelain', platform: 'android' },
+	// Android — Galaxy
+	{ id: 'galaxy', label: 'Galaxy Titanium', platform: 'android' },
+	{ id: 'galaxy-black', label: 'Galaxy Phantom Black', platform: 'android' },
+	{ id: 'galaxy-white', label: 'Galaxy Phantom White', platform: 'android' },
+	// Android — Other styles
+	{ id: 'oneplus', label: 'OnePlus / Nothing (Corner Cam)', platform: 'android' },
+	{ id: 'android-waterdrop', label: 'Android Waterdrop Notch', platform: 'android' },
 	{ id: 'android-punch-hole', label: 'Android Punch Hole', platform: 'android' },
 	{ id: 'android-clean', label: 'Android Clean', platform: 'android' },
-	{ id: 'pixel', label: 'Pixel', platform: 'android' },
-	{ id: 'galaxy', label: 'Galaxy', platform: 'android' },
 	// Universal
 	{ id: 'floating', label: 'Floating Screen', platform: 'any' },
 	{ id: 'frameless', label: 'Frameless', platform: 'any' },
@@ -52,7 +61,13 @@ function getBodyColors(frameStyle) {
 	if (frameStyle === 'ipad-silver') return BODY_COLORS.silver;
 	if (frameStyle === 'ipad-gold') return BODY_COLORS.gold;
 	if (frameStyle === 'pixel') return BODY_COLORS['pixel-cream'];
+	if (frameStyle === 'pixel-black') return BODY_COLORS.graphite;
+	if (frameStyle === 'pixel-white') return BODY_COLORS.white;
 	if (frameStyle === 'galaxy') return BODY_COLORS.titanium;
+	if (frameStyle === 'galaxy-black') return BODY_COLORS.graphite;
+	if (frameStyle === 'galaxy-white') return BODY_COLORS.white;
+	if (frameStyle === 'oneplus') return BODY_COLORS['dark-android'];
+	if (frameStyle === 'android-waterdrop') return BODY_COLORS['dark-android'];
 	return BODY_COLORS['dark-android'];
 }
 
@@ -61,6 +76,8 @@ function frameGroup(frameStyle) {
 	if (frameStyle.startsWith('iphone-dynamic-island')) return 'iphone-dynamic-island';
 	if (frameStyle.startsWith('iphone-notch')) return 'iphone-notch';
 	if (frameStyle.startsWith('ipad')) return 'ipad';
+	if (frameStyle.startsWith('pixel')) return 'pixel';
+	if (frameStyle.startsWith('galaxy')) return 'galaxy';
 	return frameStyle;
 }
 
@@ -291,6 +308,56 @@ function getFloating(l, t, w, h, cr) {
 	return { screen, overlay: null };
 }
 
+/** OnePlus / Nothing-style — punch-hole camera in the top-left corner */
+function getOnePlus(l, t, w, h, cr) {
+	const bs = w * 0.012;
+	const bt = w * 0.026;
+	const bb = w * 0.026;
+	const screen = {
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.85
+	};
+	function overlay(ctx) {
+		// Punch-hole near top-left
+		const camX = -w * 0.32;
+		const camY = t + bt + w * 0.02;
+		ctx.beginPath();
+		ctx.arc(camX, camY, w * 0.012, 0, Math.PI * 2);
+		ctx.fillStyle = '#000000';
+		ctx.fill();
+	}
+	return { screen, overlay };
+}
+
+/** Android Waterdrop Notch — small teardrop notch at top center */
+function getAndroidWaterdrop(l, t, w, h, cr) {
+	const bs = w * 0.014;
+	const bt = w * 0.034;
+	const bb = w * 0.028;
+	const screen = {
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.85
+	};
+	function overlay(ctx) {
+		// Teardrop notch at top center — small downward arc cutout shape
+		const notchW = w * 0.085;
+		const notchH = w * 0.04;
+		const nx = 0;
+		const ny = t + bt - notchH * 0.4;
+		ctx.beginPath();
+		ctx.moveTo(nx - notchW / 2, ny);
+		ctx.quadraticCurveTo(nx - notchW / 4, ny + notchH, nx, ny + notchH);
+		ctx.quadraticCurveTo(nx + notchW / 4, ny + notchH, nx + notchW / 2, ny);
+		ctx.closePath();
+		ctx.fillStyle = '#0a0a0a';
+		ctx.fill();
+		// Tiny camera lens inside the notch
+		ctx.beginPath();
+		ctx.arc(nx, ny + notchH * 0.45, notchH * 0.18, 0, Math.PI * 2);
+		ctx.fillStyle = '#1a1a22';
+		ctx.fill();
+	}
+	return { screen, overlay };
+}
+
 // ============================================================
 // Main entry point
 // ============================================================
@@ -342,6 +409,8 @@ export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screensho
 		case 'android-clean': frame = getAndroidClean(l, t, w, h, cr); break;
 		case 'pixel': frame = getPixel(l, t, w, h, cr); break;
 		case 'galaxy': frame = getGalaxy(l, t, w, h, cr); break;
+		case 'oneplus': frame = getOnePlus(l, t, w, h, cr); break;
+		case 'android-waterdrop': frame = getAndroidWaterdrop(l, t, w, h, cr); break;
 		case 'floating': frame = getFloating(l, t, w, h, cr); break;
 		case 'frameless': frame = getFrameless(l, t, w, h, cr); break;
 		case 'iphone-notch':
