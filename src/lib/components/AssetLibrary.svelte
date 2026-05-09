@@ -1,14 +1,21 @@
 <script>
 	import { imageLibrary } from '$lib/stores/imageLibrary.svelte.js';
+	import { projects } from '$lib/stores/projects.svelte.js';
 
 	let screenshotInput = $state(null);
 	let logoInput = $state(null);
+	let uploading = $state(false);
 
 	async function handleUpload(e, category) {
 		const files = e.target.files;
 		if (!files || files.length === 0) return;
-		await imageLibrary.addFiles(files, category);
-		e.target.value = '';
+		uploading = true;
+		try {
+			await imageLibrary.addFiles(files, category, projects.currentId);
+		} finally {
+			uploading = false;
+			e.target.value = '';
+		}
 	}
 
 	function remove(entry) {
@@ -17,6 +24,13 @@
 </script>
 
 <div class="asset-library">
+	{#if uploading}
+		<div class="upload-status">Uploading…</div>
+	{:else if !projects.currentId}
+		<div class="local-hint">
+			Local only — pick a project from the top bar to save uploads.
+		</div>
+	{/if}
 	<!-- Screenshots -->
 	<div class="library-group">
 		<div class="group-header">
@@ -178,5 +192,20 @@
 	.empty-drop:hover {
 		border-color: var(--accent, #f97316);
 		color: var(--text-primary, #f0eff4);
+	}
+
+	.upload-status {
+		font-size: 11px;
+		color: var(--accent, #f97316);
+		opacity: 0.85;
+	}
+
+	.local-hint {
+		font-size: 10px;
+		color: var(--text-secondary, #9d9baa);
+		padding: 4px 8px;
+		border: 1px dashed var(--border, #2e2e36);
+		border-radius: 6px;
+		opacity: 0.8;
 	}
 </style>
