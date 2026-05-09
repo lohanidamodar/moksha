@@ -30,11 +30,10 @@
 				layout: resolved.baseLayout,
 				background: editor.background,
 				pattern: editor.pattern,
-				texts: { ...editor.texts },
-				fonts: { ...editor.fonts },
 				phoneFrame: editor.phoneFrame,
 				transforms: resolved.transforms,
-				images: { ...editor.images }
+				images: { ...editor.images },
+				textOverlays: editor.textOverlays.map((o) => ({ ...o }))
 			}, size.w, size.h);
 		}
 	}
@@ -44,12 +43,11 @@
 		void editor.layout;
 		void editor.background;
 		void editor.pattern;
-		void editor.texts;
-		void editor.fonts;
 		void editor.phoneFrame;
 		void editor.images;
 		void editor.layoutTransforms;
 		void editor.assetType;
+		void editor.textOverlays;
 		void sizes;
 		renderAll();
 	});

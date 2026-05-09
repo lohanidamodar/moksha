@@ -7,8 +7,8 @@
 	import PatternPicker from './PatternPicker.svelte';
 	import AssetLibrary from './AssetLibrary.svelte';
 	import ImageSelector from './ImageSelector.svelte';
-	import FontSelector from './FontSelector.svelte';
 	import TransformControls from './TransformControls.svelte';
+	import TextOverlaysPanel from './TextOverlaysPanel.svelte';
 	import { PHONE_FRAMES } from '$lib/renderer/phone-frame.js';
 	import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$lib/renderer/backgrounds.js';
 
@@ -19,7 +19,6 @@
 	let currentSizeId = $derived(editor.sizeId || sizes[0]?.id);
 	let inputs = $derived(module?.inputs ?? []);
 	let imageInputs = $derived(inputs.filter((i) => i.type === 'image'));
-	let textInputs = $derived(inputs.filter((i) => i.type !== 'image'));
 	let isEditing = $derived(!!editor.editingQueueId);
 	let availableFrames = $derived(
 		module?.allowedPhoneFrames
@@ -66,11 +65,10 @@
 			layout: editor.layout,
 			background: deepCopy(editor.background),
 			pattern: editor.pattern ? deepCopy(editor.pattern) : null,
-			texts: deepCopy(editor.texts),
-			fonts: deepCopy(editor.fonts),
 			phoneFrame: editor.phoneFrame,
 			layoutTransforms: deepCopy(editor.layoutTransforms),
 			images: { ...editor.images },
+			textOverlays: deepCopy(editor.textOverlays),
 			thumbnail
 		};
 
@@ -80,10 +78,6 @@
 		} else {
 			queue.add(config);
 		}
-	}
-
-	function handleTextInput(inputId, e) {
-		editor.texts[inputId] = e.target.value;
 	}
 </script>
 
@@ -171,51 +165,9 @@
 		{/if}
 
 		<section class="section">
-			<h3 class="section-title">Fonts</h3>
-			<div class="inputs">
-				<div class="input-group">
-					<label class="input-label">Title Font</label>
-					<FontSelector value={editor.fonts.title} onchange={(f) => editor.fonts.title = f} />
-				</div>
-				<div class="input-group">
-					<label class="input-label">Subtitle Font</label>
-					<FontSelector value={editor.fonts.subtitle} onchange={(f) => editor.fonts.subtitle = f} />
-				</div>
-			</div>
+			<h3 class="section-title">Text</h3>
+			<TextOverlaysPanel />
 		</section>
-
-		{#if textInputs.length > 0}
-			<section class="section">
-				<h3 class="section-title">Text</h3>
-				<div class="inputs">
-					{#each textInputs as input}
-						<div class="input-group">
-							<label class="input-label" for="input-{input.id}">{input.label}</label>
-
-							{#if input.type === 'textarea'}
-								<textarea
-									id="input-{input.id}"
-									class="text-input textarea"
-									placeholder={input.placeholder}
-									value={editor.texts[input.id] ?? ''}
-									oninput={(e) => handleTextInput(input.id, e)}
-									rows="3"
-								></textarea>
-							{:else}
-								<input
-									id="input-{input.id}"
-									class="text-input"
-									type="text"
-									placeholder={input.placeholder}
-									value={editor.texts[input.id] ?? ''}
-									oninput={(e) => handleTextInput(input.id, e)}
-								/>
-							{/if}
-						</div>
-					{/each}
-				</div>
-			</section>
-		{/if}
 	</div>
 
 	<div class="panel-footer">

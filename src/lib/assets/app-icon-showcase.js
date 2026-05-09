@@ -3,6 +3,7 @@
  */
 import { renderBackgroundAndPattern } from '$lib/renderer/backgrounds.js';
 import { roundRect } from '$lib/renderer/canvas.js';
+import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
 
 /**
  * Draws the app icon centered with layout-specific effects.
@@ -118,6 +119,8 @@ function render(ctx, config, baseW, baseH) {
 	if (iconRotation) {
 		ctx.restore();
 	}
+
+	renderTextOverlays(ctx, config.textOverlays, w, h, config);
 }
 
 export default {
