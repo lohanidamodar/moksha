@@ -9,67 +9,78 @@ import { renderBackground } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { drawText } from '$lib/renderer/canvas.js';
 
-/** Returns phone and title positioning for a given layout id. */
+/**
+ * Returns phone and title positioning for a given layout id.
+ *
+ * Phone frame aspect ratio is derived from the canvas (= device) aspect,
+ * so iPhone frames look like iPhones, iPads look like iPads, etc.
+ */
 export function getLayout(layout, w, h) {
+	// Frame aspect = canvas aspect (canvas is the actual device resolution)
+	const ar = h / w;
+
+	// Layout-specific phone widths (proportions of canvas width)
 	const pw = w * 0.56;
-	const ph = pw * 2;
 	const pwSmall = w * 0.52;
-	const phSmall = pwSmall * 2;
+	const pwHero = w * 0.72;
+	const pwSplit = w * 0.85;
+	const pwBottom = w * 0.6;
+	const pwPersp = w * 0.62;
 
 	switch (layout) {
 		case 'tilt-right':
 			return {
-				phone: { x: w * 0.52, y: h * 0.52, w: pw, h: ph, angle: 12 },
+				phone: { x: w * 0.52, y: h * 0.52, w: pw, h: pw * ar, angle: 12 },
 				title: { x: w * 0.07, y: h * 0.18, align: 'left' }
 			};
 		case 'left-title':
 			return {
-				phone: { x: w * 0.66, y: h * 0.54, w: pwSmall, h: phSmall, angle: 0 },
+				phone: { x: w * 0.66, y: h * 0.54, w: pwSmall, h: pwSmall * ar, angle: 0 },
 				title: { x: w * 0.07, y: h * 0.22, align: 'left' }
 			};
 		case 'float-up':
 			return {
-				phone: { x: w * 0.5, y: h * 0.62, w: pw, h: ph, angle: 0 },
+				phone: { x: w * 0.5, y: h * 0.62, w: pw, h: pw * ar, angle: 0 },
 				title: { x: w * 0.5, y: h * 0.13, align: 'center' }
 			};
 		case 'tilt-left':
 			return {
-				phone: { x: w * 0.48, y: h * 0.52, w: pw, h: ph, angle: -12 },
+				phone: { x: w * 0.48, y: h * 0.52, w: pw, h: pw * ar, angle: -12 },
 				title: { x: w * 0.93, y: h * 0.18, align: 'right' }
 			};
 		case 'right-title':
 			return {
-				phone: { x: w * 0.34, y: h * 0.54, w: pwSmall, h: phSmall, angle: 0 },
+				phone: { x: w * 0.34, y: h * 0.54, w: pwSmall, h: pwSmall * ar, angle: 0 },
 				title: { x: w * 0.93, y: h * 0.22, align: 'right' }
 			};
 		case 'bottom-emerge':
 			return {
-				phone: { x: w * 0.5, y: h * 0.7, w: w * 0.6, h: w * 0.6 * 2, angle: 0 },
+				phone: { x: w * 0.5, y: h * 0.72, w: pwBottom, h: pwBottom * ar, angle: 0 },
 				title: { x: w * 0.5, y: h * 0.11, align: 'center' }
 			};
 		case 'perspective':
 			return {
-				phone: { x: w * 0.5, y: h * 0.54, w: w * 0.62, h: w * 0.62 * 2, angle: 5, perspective: true },
+				phone: { x: w * 0.5, y: h * 0.54, w: pwPersp, h: pwPersp * ar, angle: 5, perspective: true },
 				title: { x: w * 0.07, y: h * 0.11, align: 'left' }
 			};
 		case 'hero-center':
 			return {
-				phone: { x: w * 0.5, y: h * 0.56, w: w * 0.72, h: w * 0.72 * 2, angle: 0 },
+				phone: { x: w * 0.5, y: h * 0.56, w: pwHero, h: pwHero * ar, angle: 0 },
 				title: { x: w * 0.5, y: h * 0.09, align: 'center' }
 			};
 		case 'split-left':
 			return {
-				phone: { x: w, y: h * 0.52, w: w * 0.85, h: w * 0.85 * 2, angle: 0 },
+				phone: { x: w, y: h * 0.52, w: pwSplit, h: pwSplit * ar, angle: 0 },
 				title: { x: w * 0.08, y: h * 0.12, align: 'left' }
 			};
 		case 'split-right':
 			return {
-				phone: { x: 0, y: h * 0.52, w: w * 0.85, h: w * 0.85 * 2, angle: 0 },
+				phone: { x: 0, y: h * 0.52, w: pwSplit, h: pwSplit * ar, angle: 0 },
 				title: { x: w * 0.92, y: h * 0.12, align: 'right' }
 			};
 		default:
 			return {
-				phone: { x: w * 0.5, y: h * 0.52, w: pw, h: ph, angle: 0 },
+				phone: { x: w * 0.5, y: h * 0.52, w: pw, h: pw * ar, angle: 0 },
 				title: { x: w * 0.5, y: h * 0.16, align: 'center' }
 			};
 	}

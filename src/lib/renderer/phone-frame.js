@@ -81,20 +81,23 @@ function drawBody(ctx, l, t, w, h, cr, colors) {
 // ============================================================
 
 function getIPhoneDynamicIsland(l, t, w, h, cr) {
-	const bs = 10, bt = 20, bb = 20;
+	// Bezels as fractions of the smaller dimension for visual consistency
+	const bs = w * 0.012;
+	const bt = w * 0.024;
+	const bb = w * 0.024;
 	const screen = {
-		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr - 6
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.85
 	};
 	function overlay(ctx) {
-		// Dynamic Island pill
-		const pillW = w * 0.28, pillH = h * 0.018;
-		const pillX = -pillW / 2, pillY = t + bt + h * 0.012;
+		// Dynamic Island pill — sized as a fraction of phone width
+		const pillW = w * 0.27, pillH = w * 0.05;
+		const pillX = -pillW / 2, pillY = t + bt + w * 0.018;
 		roundRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
 		ctx.fillStyle = '#000000';
 		ctx.fill();
 		// Home bar
-		const barW = w * 0.35, barH = 5;
-		roundRect(ctx, -barW / 2, t + h - bb / 2 - 2, barW, barH, barH / 2);
+		const barW = w * 0.35, barH = w * 0.008;
+		roundRect(ctx, -barW / 2, t + h - bb / 2 - barH / 2, barW, barH, barH / 2);
 		ctx.fillStyle = 'rgba(255,255,255,0.3)';
 		ctx.fill();
 	}
@@ -102,13 +105,15 @@ function getIPhoneDynamicIsland(l, t, w, h, cr) {
 }
 
 function getIPhoneNotch(l, t, w, h, cr) {
-	const bs = 14, bt = 50, bb = 50;
+	const bs = w * 0.018;
+	const bt = w * 0.062;
+	const bb = w * 0.062;
 	const screen = {
-		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr - 8
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.8
 	};
 	function overlay(ctx) {
-		const nw = w * 0.33, nh = h * 0.016;
-		const nx = -nw / 2, ny = t + bt - nh / 2 - 2;
+		const nw = w * 0.32, nh = w * 0.04;
+		const nx = -nw / 2, ny = t + bt - nh / 2 - w * 0.003;
 		// Notch
 		roundRect(ctx, nx, ny, nw, nh, nh / 2);
 		ctx.fillStyle = '#111114';
@@ -119,7 +124,8 @@ function getIPhoneNotch(l, t, w, h, cr) {
 		ctx.fillStyle = '#0d2137';
 		ctx.fill();
 		// Home bar
-		roundRect(ctx, -70, t + h - bb / 2 - 2, 140, 5, 2.5);
+		const barW = w * 0.32, barH = w * 0.007;
+		roundRect(ctx, -barW / 2, t + h - bb / 2 - barH / 2, barW, barH, barH / 2);
 		ctx.fillStyle = 'rgba(255,255,255,0.25)';
 		ctx.fill();
 	}
@@ -127,13 +133,16 @@ function getIPhoneNotch(l, t, w, h, cr) {
 }
 
 function getIPad(l, t, w, h, cr) {
-	const bs = 18, bt = 30, bb = 30;
+	const bs = w * 0.018;
+	const bt = w * 0.025;
+	const bb = w * 0.025;
 	const screen = {
-		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr - 8
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.8
 	};
 	function overlay(ctx) {
+		// Front camera dot at top center
 		ctx.beginPath();
-		ctx.arc(0, t + bt / 2, h * 0.005, 0, Math.PI * 2);
+		ctx.arc(0, t + bt / 2, w * 0.005, 0, Math.PI * 2);
 		ctx.fillStyle = '#1a1a22';
 		ctx.fill();
 	}
@@ -141,19 +150,21 @@ function getIPad(l, t, w, h, cr) {
 }
 
 function getAndroidPunchHole(l, t, w, h, cr) {
-	const bs = 10, bt = 22, bb = 22;
+	const bs = w * 0.012;
+	const bt = w * 0.026;
+	const bb = w * 0.026;
 	const screen = {
-		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr - 6
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.85
 	};
 	function overlay(ctx) {
-		// Punch-hole camera
+		// Punch-hole camera near top center
 		ctx.beginPath();
-		ctx.arc(0, t + bt + h * 0.015, h * 0.008, 0, Math.PI * 2);
+		ctx.arc(0, t + bt + w * 0.018, w * 0.012, 0, Math.PI * 2);
 		ctx.fillStyle = '#000000';
 		ctx.fill();
 		// Thin chin bar
-		const barW = w * 0.2, barH = 4;
-		roundRect(ctx, -barW / 2, t + h - bb / 2 - 2, barW, barH, barH / 2);
+		const barW = w * 0.2, barH = w * 0.006;
+		roundRect(ctx, -barW / 2, t + h - bb / 2 - barH / 2, barW, barH, barH / 2);
 		ctx.fillStyle = 'rgba(255,255,255,0.15)';
 		ctx.fill();
 	}
@@ -161,9 +172,11 @@ function getAndroidPunchHole(l, t, w, h, cr) {
 }
 
 function getAndroidClean(l, t, w, h, cr) {
-	const bs = 10, bt = 16, bb = 16;
+	const bs = w * 0.012;
+	const bt = w * 0.018;
+	const bb = w * 0.018;
 	const screen = {
-		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr - 6
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.85
 	};
 	return { screen, overlay: null };
 }
@@ -182,7 +195,8 @@ function getFrameless(l, t, w, h, cr) {
  */
 export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screenshotImg, frameStyle = 'iphone-notch') {
 	const isFrameless = frameStyle === 'frameless';
-	const cr = isFrameless ? 24 : 40;
+	// Corner radius scales with frame width (iPhones ~5%, frameless ~3%)
+	const cr = isFrameless ? w * 0.03 : w * 0.05;
 
 	ctx.save();
 	ctx.translate(x, y);
