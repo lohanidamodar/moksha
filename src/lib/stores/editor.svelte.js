@@ -12,6 +12,11 @@ const DEFAULTS = {
 	editingQueueId: null
 };
 
+/** Build a key for the transforms map that combines layout and size */
+export function transformKey(layout, sizeId) {
+	return `${layout}::${sizeId ?? '_default_'}`;
+}
+
 class EditorState {
 	assetType = $state(DEFAULTS.assetType);
 	sizeId = $state(DEFAULTS.sizeId);
@@ -20,29 +25,32 @@ class EditorState {
 	texts = $state({ ...DEFAULTS.texts });
 	fonts = $state({ ...DEFAULTS.fonts });
 	phoneFrame = $state(DEFAULTS.phoneFrame);
+	// Keyed by `${layout}::${sizeId}` — each layout+size combo has its own transforms
 	layoutTransforms = $state({});
 	images = $state({ ...DEFAULTS.images });
 	editingQueueId = $state(DEFAULTS.editingQueueId);
 
-	/** Get transforms for a specific layout */
-	getTransforms(layoutId) {
-		return this.layoutTransforms[layoutId] ?? DEFAULT_TRANSFORM;
+	/** Get transforms for a specific layout + size combination */
+	getTransforms(layoutId, sizeId = this.sizeId) {
+		return this.layoutTransforms[transformKey(layoutId, sizeId)] ?? DEFAULT_TRANSFORM;
 	}
 
-	/** Set a transform value for the current layout */
+	/** Set a transform value for the current layout + size */
 	setTransform(element, prop, value) {
-		if (!this.layoutTransforms[this.layout]) {
-			this.layoutTransforms[this.layout] = structuredClone(DEFAULT_TRANSFORM);
+		const key = transformKey(this.layout, this.sizeId);
+		if (!this.layoutTransforms[key]) {
+			this.layoutTransforms[key] = structuredClone(DEFAULT_TRANSFORM);
 		}
-		this.layoutTransforms[this.layout][element][prop] = value;
+		this.layoutTransforms[key][element][prop] = value;
 	}
 
-	/** Reset transforms for the current layout only */
+	/** Reset transforms for the current layout + size only */
 	resetCurrentTransforms() {
-		this.layoutTransforms[this.layout] = structuredClone(DEFAULT_TRANSFORM);
+		const key = transformKey(this.layout, this.sizeId);
+		this.layoutTransforms[key] = structuredClone(DEFAULT_TRANSFORM);
 	}
 
-	/** Reset all layout transforms */
+	/** Reset all transforms */
 	resetAllTransforms() {
 		this.layoutTransforms = {};
 	}
@@ -68,9 +76,14 @@ class EditorState {
 		this.texts = { ...item.texts };
 		this.fonts = { ...(item.fonts ?? DEFAULTS.fonts) };
 		this.phoneFrame = item.phoneFrame ?? DEFAULTS.phoneFrame;
-		this.layoutTransforms = item.layoutTransforms
-			? structuredClone(item.layoutTransforms)
-			: (item.transforms ? { [item.layout]: structuredClone(item.transforms) } : {});
+		// Restore layoutTransforms — handle both old (per-layout) and new (per-layout+size) shapes
+		if (item.layoutTransforms) {
+			this.layoutTransforms = structuredClone(item.layoutTransforms);
+		} else if (item.transforms) {
+			this.layoutTransforms = { [transformKey(item.layout, item.sizeId)]: structuredClone(item.transforms) };
+		} else {
+			this.layoutTransforms = {};
+		}
 		this.images = { ...item.images };
 		this.editingQueueId = item.id;
 	}

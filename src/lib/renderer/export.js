@@ -8,6 +8,10 @@ import pkg from 'file-saver';
 const { saveAs } = pkg;
 import { getAssetType } from '$lib/assets/index.js';
 import { APP_NAME, APP_VERSION } from '$lib/config.js';
+import { transformKey } from '$lib/stores/editor.svelte.js';
+import { resolveLayout } from '$lib/layoutResolver.js';
+
+const DEFAULT_TRANSFORM = { phone: { x: 0, y: 0, scale: 1, rotation: null }, logo: { x: 0, y: 0, scale: 1, rotation: null } };
 
 /**
  * Convert a canvas to a PNG Blob via a promise wrapper around toBlob.
@@ -44,15 +48,23 @@ export async function renderToBlob(queueItem, size) {
 	canvas.height = size.h;
 	const ctx = canvas.getContext('2d');
 
+	// Pick transforms for this specific size, falling back to layout-only or default
+	const sizeTransforms =
+		queueItem.layoutTransforms?.[transformKey(queueItem.layout, size.id)] ??
+		queueItem.transforms ??
+		DEFAULT_TRANSFORM;
+
+	const resolved = resolveLayout(queueItem.layout, sizeTransforms);
+
 	module.render(
 		ctx,
 		{
-			layout: queueItem.layout,
+			layout: resolved.baseLayout,
 			background: queueItem.background,
 			texts: queueItem.texts,
 			fonts: queueItem.fonts,
 			phoneFrame: queueItem.phoneFrame,
-			transforms: queueItem.transforms,
+			transforms: resolved.transforms,
 			images: queueItem.images
 		},
 		size.w,

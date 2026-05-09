@@ -8,7 +8,6 @@
 	import ImageSelector from './ImageSelector.svelte';
 	import FontSelector from './FontSelector.svelte';
 	import TransformControls from './TransformControls.svelte';
-	import { resolveLayout } from '$lib/layoutResolver.js';
 	import { PHONE_FRAMES } from '$lib/renderer/phone-frame.js';
 
 	let { generateThumbnail } = $props();
@@ -27,17 +26,15 @@
 
 	function handleAddToQueue() {
 		const thumbnail = generateThumbnail?.() ?? null;
-		const resolved = resolveLayout(editor.layout, editor.getTransforms(editor.layout));
 
 		const config = {
 			assetType: editor.assetType,
 			sizeId: editor.sizeId,
-			layout: resolved.baseLayout,
+			layout: editor.layout,
 			background: deepCopy(editor.background),
 			texts: deepCopy(editor.texts),
 			fonts: deepCopy(editor.fonts),
 			phoneFrame: editor.phoneFrame,
-			transforms: deepCopy(resolved.transforms),
 			layoutTransforms: deepCopy(editor.layoutTransforms),
 			images: { ...editor.images },
 			thumbnail

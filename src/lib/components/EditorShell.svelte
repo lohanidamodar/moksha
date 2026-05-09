@@ -3,6 +3,7 @@
 	import CanvasPreview from './CanvasPreview.svelte';
 	import OptionsPanel from './OptionsPanel.svelte';
 	import QueueStrip from './QueueStrip.svelte';
+	import SizesPreview from './SizesPreview.svelte';
 
 	let canvasPreview = $state(null);
 
@@ -17,6 +18,7 @@
 	<div class="editor-body">
 		<div class="editor-left">
 			<CanvasPreview bind:this={canvasPreview} />
+			<SizesPreview />
 			<QueueStrip />
 		</div>
 		<OptionsPanel {generateThumbnail} />
