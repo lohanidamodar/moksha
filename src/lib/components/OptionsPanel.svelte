@@ -4,6 +4,7 @@
 	import { getAssetType } from '$lib/assets/index.js';
 	import LayoutPicker from './LayoutPicker.svelte';
 	import BackgroundPicker from './BackgroundPicker.svelte';
+	import PatternPicker from './PatternPicker.svelte';
 	import AssetLibrary from './AssetLibrary.svelte';
 	import ImageSelector from './ImageSelector.svelte';
 	import FontSelector from './FontSelector.svelte';
@@ -37,6 +38,7 @@
 			sizeId: editor.sizeId,
 			layout: editor.layout,
 			background: deepCopy(editor.background),
+			pattern: editor.pattern ? deepCopy(editor.pattern) : null,
 			texts: deepCopy(editor.texts),
 			fonts: deepCopy(editor.fonts),
 			phoneFrame: editor.phoneFrame,
@@ -88,6 +90,11 @@
 		<section class="section">
 			<h3 class="section-title">Background</h3>
 			<BackgroundPicker />
+		</section>
+
+		<section class="section">
+			<h3 class="section-title">Pattern</h3>
+			<PatternPicker />
 		</section>
 
 		{#if imageInputs.some((i) => i.id === 'screenshot')}

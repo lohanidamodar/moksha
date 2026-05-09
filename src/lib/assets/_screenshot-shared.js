@@ -5,7 +5,7 @@
  * Layout positions use proportional coordinates so they work for any
  * canvas dimensions.
  */
-import { renderBackground } from '$lib/renderer/backgrounds.js';
+import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { drawText } from '$lib/renderer/canvas.js';
 
@@ -112,7 +112,7 @@ export function renderScreenshot(ctx, config, baseW, baseH) {
 	const w = baseW;
 	const h = baseH;
 
-	renderBackground(ctx, w, h, config.background);
+	renderBackgroundAndPattern(ctx, w, h, config.background, config.pattern);
 
 	const layoutData = getLayout(config.layout, w, h);
 	const p = layoutData.phone;
@@ -129,14 +129,21 @@ export function renderScreenshot(ctx, config, baseW, baseH) {
 
 	const titleFont = config.fonts?.title || 'Inter';
 	const subtitleFont = config.fonts?.subtitle || 'Inter';
+
+	// Auto contrast based on background tone
+	const tone = getBackgroundTone(config.background);
+	const titleColor = tone === 'light' ? '#1a1a1f' : '#ffffff';
+	const subtitleColor = tone === 'light' ? 'rgba(26,26,31,0.75)' : 'rgba(255,255,255,0.8)';
+	const shadowColor = tone === 'light' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
+
 	const titleText = config.texts?.title || '';
 	if (titleText) {
 		const fontSize = Math.round(w * 0.065);
 		drawText(ctx, titleText, t.x, t.y, {
 			font: `800 ${fontSize}px "${titleFont}", sans-serif`,
-			color: '#ffffff',
+			color: titleColor,
 			align: t.align,
-			shadow: { color: 'rgba(0,0,0,0.4)', blur: 20, offsetY: 4 }
+			shadow: { color: shadowColor, blur: 20, offsetY: 4 }
 		});
 	}
 	const subtitleText = config.texts?.subtitle || '';
@@ -148,9 +155,9 @@ export function renderScreenshot(ctx, config, baseW, baseH) {
 		const subFontSize = Math.round(w * 0.04);
 		drawText(ctx, subtitleText, t.x, subtitleY, {
 			font: `600 ${subFontSize}px "${subtitleFont}", sans-serif`,
-			color: 'rgba(255,255,255,0.8)',
+			color: subtitleColor,
 			align: t.align,
-			shadow: { color: 'rgba(0,0,0,0.4)', blur: 20, offsetY: 4 }
+			shadow: { color: shadowColor, blur: 20, offsetY: 4 }
 		});
 	}
 }

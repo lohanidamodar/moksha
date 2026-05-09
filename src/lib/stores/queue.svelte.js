@@ -9,6 +9,7 @@ class QueueState {
 			sizeId: item.sizeId ?? null,
 			layout: item.layout,
 			background: { ...item.background },
+			pattern: item.pattern ? { ...item.pattern } : null,
 			texts: { ...item.texts },
 			fonts: item.fonts ? { ...item.fonts } : undefined,
 			phoneFrame: item.phoneFrame ?? 'iphone-dynamic-island',

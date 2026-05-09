@@ -29,6 +29,7 @@
 			module.render(ctx, {
 				layout: resolved.baseLayout,
 				background: editor.background,
+				pattern: editor.pattern,
 				texts: { ...editor.texts },
 				fonts: { ...editor.fonts },
 				phoneFrame: editor.phoneFrame,
@@ -42,6 +43,7 @@
 		// Track all reactive state we care about
 		void editor.layout;
 		void editor.background;
+		void editor.pattern;
 		void editor.texts;
 		void editor.fonts;
 		void editor.phoneFrame;

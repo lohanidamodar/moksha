@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { renderAsset } from '$lib/renderer/server-canvas.js';
 import { assetTypes } from '$lib/assets/index.js';
+import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$lib/renderer/backgrounds.js';
 
 /**
  * POST /api/render
@@ -91,8 +92,14 @@ export async function GET() {
 			sizeId: 'string — size variant id (defaults to first size)',
 			layout: 'string — layout id (defaults to first layout)',
 			background: {
-				type: 'gradient | solid | pattern',
-				id: 'string — preset id (e.g. "sunset-pink", "navy", "dots")'
+				type: 'gradient | mesh | solid',
+				id: 'string — preset id (e.g. "sunset-pink", "aurora", "navy")'
+			},
+			pattern: {
+				note: 'Optional texture overlay drawn on top of the background. Pass null for no pattern.',
+				id: 'string — pattern preset id (e.g. "dots", "topography", "bokeh")',
+				color: 'string (optional) — override overlay color, defaults to white on dark / black on light',
+				opacity: 'number (optional) — override opacity, defaults to 0.08 on dark / 0.06 on light'
 			},
 			texts: 'object — key/value pairs matching the asset type inputs (e.g. { title, subtitle })',
 			fonts: {
@@ -108,6 +115,12 @@ export async function GET() {
 				logo: { x: 'number (-50 to 50)', y: 'number (-50 to 50)', scale: 'number (0.3 to 2)', rotation: 'number (-45 to 45)' }
 			}
 		},
+		availableBackgrounds: {
+			gradient: GRADIENTS.map((g) => ({ id: g.id, label: g.label, tone: g.tone })),
+			mesh: MESH.map((m) => ({ id: m.id, label: m.label, tone: m.tone })),
+			solid: SOLIDS.map((s) => ({ id: s.id, label: s.label, tone: s.tone }))
+		},
+		availablePatterns: PATTERNS.map((p) => ({ id: p.id, label: p.label })),
 		assetTypeOverview: {
 			'iphone-screenshot': 'iPhone screenshot mockup. Renders 4 sizes (5.5"–6.7"). Use iPhone frames.',
 			'ipad-screenshot': 'iPad screenshot mockup. Renders 2 sizes (10.5", 12.9"). Use iPad frame.',
@@ -129,11 +142,20 @@ export async function GET() {
 			androidPhone: {
 				assetType: 'android-phone-screenshot',
 				layout: 'hero-center',
-				background: { type: 'pattern', id: 'dots' },
+				background: { type: 'gradient', id: 'midnight-purple' },
+				pattern: { id: 'dots' },
 				texts: { title: 'Amazing App', subtitle: 'Download now' },
 				fonts: { title: 'Bebas Neue', subtitle: 'Lato' },
 				phoneFrame: 'android-punch-hole',
 				transforms: { phone: { x: 0, y: -5, scale: 1.1, rotation: 0 } }
+			},
+			meshWithPattern: {
+				assetType: 'iphone-screenshot',
+				layout: 'float-up',
+				background: { type: 'mesh', id: 'aurora' },
+				pattern: { id: 'soft-grid' },
+				texts: { title: 'Hello World', subtitle: 'Mesh + pattern overlay' },
+				phoneFrame: 'iphone-dynamic-island'
 			},
 			ipad: {
 				assetType: 'ipad-screenshot',

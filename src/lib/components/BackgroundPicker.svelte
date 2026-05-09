@@ -6,8 +6,8 @@
 
 	const tabs = [
 		{ id: 'gradient', label: 'Gradient' },
-		{ id: 'solid', label: 'Solid' },
-		{ id: 'pattern', label: 'Pattern' }
+		{ id: 'mesh', label: 'Mesh' },
+		{ id: 'solid', label: 'Solid' }
 	];
 
 	function isSelected(type, id) {
@@ -16,6 +16,17 @@
 
 	function select(type, id) {
 		editor.background = { type, id };
+	}
+
+	function meshSwatchStyle(m) {
+		// Build a CSS approximation of the mesh: base + radial gradients
+		const radials = m.blobs
+			.map(
+				(b) =>
+					`radial-gradient(circle at ${b.x * 100}% ${b.y * 100}%, ${b.color}${m.tone === 'light' ? '99' : 'cc'} 0%, transparent ${b.r * 100}%)`
+			)
+			.join(', ');
+		return `background: ${radials}, ${m.base}; background-blend-mode: ${m.tone === 'light' ? 'multiply' : 'screen'};`;
 	}
 </script>
 
@@ -43,6 +54,16 @@
 					onclick={() => select('gradient', g.id)}
 				></button>
 			{/each}
+		{:else if activeTab === 'mesh'}
+			{#each ALL_BACKGROUNDS.mesh as m}
+				<button
+					class="swatch"
+					class:selected={isSelected('mesh', m.id)}
+					style={meshSwatchStyle(m)}
+					title={m.label}
+					onclick={() => select('mesh', m.id)}
+				></button>
+			{/each}
 		{:else if activeTab === 'solid'}
 			{#each ALL_BACKGROUNDS.solids as s}
 				<button
@@ -51,16 +72,6 @@
 					style="background: {s.color}"
 					title={s.label}
 					onclick={() => select('solid', s.id)}
-				></button>
-			{/each}
-		{:else if activeTab === 'pattern'}
-			{#each ALL_BACKGROUNDS.patterns as p}
-				<button
-					class="swatch"
-					class:selected={isSelected('pattern', p.id)}
-					style="background: linear-gradient(135deg, {p.baseGradient[0]}, {p.baseGradient[1]})"
-					title={p.label}
-					onclick={() => select('pattern', p.id)}
 				></button>
 			{/each}
 		{/if}

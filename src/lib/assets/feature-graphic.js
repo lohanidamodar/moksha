@@ -1,7 +1,7 @@
 /**
  * Feature Graphic — Play Store 1024x500 banner with logo, tagline, and subtitle.
  */
-import { renderBackground } from '$lib/renderer/backgrounds.js';
+import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { drawText } from '$lib/renderer/canvas.js';
 
@@ -101,9 +101,13 @@ function render(ctx, config, baseW, baseH) {
 	const h = baseH;
 	const titleFont = config.fonts?.title || 'Inter';
 	const subtitleFont = config.fonts?.subtitle || 'Inter';
+	const tone = getBackgroundTone(config.background);
+	const titleColor = tone === 'light' ? '#1a1a1f' : '#ffffff';
+	const subtitleColor = tone === 'light' ? 'rgba(26,26,31,0.75)' : 'rgba(255,255,255,0.8)';
+	const shadowColor = tone === 'light' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
 
 	// 1. Background
-	renderBackground(ctx, w, h, config.background);
+	renderBackgroundAndPattern(ctx, w, h, config.background, config.pattern);
 
 	// 2. Layout data
 	const ld = getLayoutData(config.layout, w, h);
@@ -121,9 +125,9 @@ function render(ctx, config, baseW, baseH) {
 		const fontSize = Math.round(h * 0.1);
 		drawText(ctx, tagline, ld.tagline.x, ld.tagline.y, {
 			font: `800 ${fontSize}px "${titleFont}", sans-serif`,
-			color: '#ffffff',
+			color: titleColor,
 			align: ld.tagline.align,
-			shadow: { color: 'rgba(0,0,0,0.4)', blur: 16, offsetY: 3 }
+			shadow: { color: shadowColor, blur: 16, offsetY: 3 }
 		});
 	}
 
@@ -133,9 +137,9 @@ function render(ctx, config, baseW, baseH) {
 		const fontSize = Math.round(h * 0.06);
 		drawText(ctx, subtitle, ld.subtitle.x, ld.subtitle.y, {
 			font: `600 ${fontSize}px "${subtitleFont}", sans-serif`,
-			color: 'rgba(255,255,255,0.8)',
+			color: subtitleColor,
 			align: ld.subtitle.align,
-			shadow: { color: 'rgba(0,0,0,0.3)', blur: 12, offsetY: 2 }
+			shadow: { color: shadowColor, blur: 12, offsetY: 2 }
 		});
 	}
 

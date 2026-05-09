@@ -5,6 +5,7 @@ const DEFAULTS = {
 	sizeId: null,
 	layout: 'tilt-right',
 	background: { type: 'gradient', id: 'sunset-pink' },
+	pattern: null,
 	texts: { title: '', subtitle: '' },
 	fonts: { title: 'Montserrat', subtitle: 'Open Sans' },
 	phoneFrame: 'iphone-dynamic-island',
@@ -22,6 +23,7 @@ class EditorState {
 	sizeId = $state(DEFAULTS.sizeId);
 	layout = $state(DEFAULTS.layout);
 	background = $state({ ...DEFAULTS.background });
+	pattern = $state(DEFAULTS.pattern);
 	texts = $state({ ...DEFAULTS.texts });
 	fonts = $state({ ...DEFAULTS.fonts });
 	phoneFrame = $state(DEFAULTS.phoneFrame);
@@ -60,6 +62,7 @@ class EditorState {
 		this.sizeId = DEFAULTS.sizeId;
 		this.layout = DEFAULTS.layout;
 		this.background = { ...DEFAULTS.background };
+		this.pattern = DEFAULTS.pattern;
 		this.texts = { ...DEFAULTS.texts };
 		this.fonts = { ...DEFAULTS.fonts };
 		this.phoneFrame = DEFAULTS.phoneFrame;
@@ -73,6 +76,7 @@ class EditorState {
 		this.sizeId = item.sizeId ?? null;
 		this.layout = item.layout;
 		this.background = { ...item.background };
+		this.pattern = item.pattern ? { ...item.pattern } : null;
 		this.texts = { ...item.texts };
 		this.fonts = { ...(item.fonts ?? DEFAULTS.fonts) };
 		this.phoneFrame = item.phoneFrame ?? DEFAULTS.phoneFrame;

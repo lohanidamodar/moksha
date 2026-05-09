@@ -77,6 +77,7 @@ export async function renderAsset(config, imageBuffers = {}) {
 	module.render(ctx, {
 		layout: config.layout || module.layouts[0].id,
 		background: config.background || { type: 'gradient', id: 'sunset-pink' },
+		pattern: config.pattern || null,
 		texts: config.texts || {},
 		fonts: config.fonts || { title: 'Montserrat', subtitle: 'Open Sans' },
 		phoneFrame: config.phoneFrame || 'iphone-dynamic-island',

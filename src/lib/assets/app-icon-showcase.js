@@ -1,7 +1,7 @@
 /**
  * App Icon Showcase — displays an app icon with glow, shadow, or perspective effects.
  */
-import { renderBackground } from '$lib/renderer/backgrounds.js';
+import { renderBackgroundAndPattern } from '$lib/renderer/backgrounds.js';
 import { roundRect } from '$lib/renderer/canvas.js';
 
 /**
@@ -95,7 +95,7 @@ function render(ctx, config, baseW, baseH) {
 	const h = baseH;
 
 	// 1. Background
-	renderBackground(ctx, w, h, config.background);
+	renderBackgroundAndPattern(ctx, w, h, config.background, config.pattern);
 
 	// 2. Icon size — 50% of the smaller dimension (with transform)
 	const lt = config.transforms?.logo ?? { x: 0, y: 0, scale: 1, rotation: 0 };
