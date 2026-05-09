@@ -1,7 +1,7 @@
 /**
  * Promo Banner — promotional banner with logo, text, and optional phone frame.
  */
-import { renderBackgroundAndPattern } from '$lib/renderer/backgrounds.js';
+import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
 
@@ -86,7 +86,8 @@ function render(ctx, config, baseW, baseH) {
 			0,
 			false,
 			config.images.screenshot,
-			config.phoneFrame
+			config.phoneFrame,
+			getBackgroundTone(config.background)
 		);
 	}
 

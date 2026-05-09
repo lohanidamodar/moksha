@@ -303,11 +303,12 @@ function getGalaxy(l, t, w, h, cr) {
 }
 
 /** Frameless Bordered — screen with a thin border outline drawn over its edge */
-function getFramelessBordered(l, t, w, h, cr) {
+function getFramelessBordered(l, t, w, h, cr, tone = 'dark') {
 	const screen = { sx: l, sy: t, sw: w, sh: h, sr: cr };
 	function overlay(ctx) {
 		roundRect(ctx, l, t, w, h, cr);
-		ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+		// Auto-contrast: white-ish on dark backgrounds, dark-ish on light backgrounds
+		ctx.strokeStyle = tone === 'light' ? 'rgba(26,26,31,0.5)' : 'rgba(255,255,255,0.55)';
 		ctx.lineWidth = Math.max(2, w * 0.004);
 		ctx.stroke();
 	}
@@ -371,7 +372,7 @@ function getAndroidWaterdrop(l, t, w, h, cr) {
 /**
  * Draws a phone frame with the specified style.
  */
-export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screenshotImg, frameStyle = 'iphone-notch') {
+export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screenshotImg, frameStyle = 'iphone-notch', tone = 'dark') {
 	const isBodyless = frameStyle === 'frameless' || frameStyle === 'frameless-bordered';
 
 	const cr = isBodyless ? w * 0.03 : w * 0.05;
@@ -415,7 +416,7 @@ export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screensho
 		case 'oneplus': frame = getOnePlus(l, t, w, h, cr); break;
 		case 'android-waterdrop': frame = getAndroidWaterdrop(l, t, w, h, cr); break;
 		case 'frameless': frame = getFrameless(l, t, w, h, cr); break;
-		case 'frameless-bordered': frame = getFramelessBordered(l, t, w, h, cr); break;
+		case 'frameless-bordered': frame = getFramelessBordered(l, t, w, h, cr, tone); break;
 		case 'iphone-notch':
 		default: frame = getIPhoneNotch(l, t, w, h, cr); break;
 	}

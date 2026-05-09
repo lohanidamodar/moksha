@@ -5,7 +5,7 @@
  * Layout positions use proportional coordinates so they work for any
  * canvas dimensions.
  */
-import { renderBackgroundAndPattern } from '$lib/renderer/backgrounds.js';
+import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
 import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
 import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
 
@@ -77,6 +77,7 @@ export function renderScreenshot(ctx, config, baseW, baseH) {
 
 	renderBackgroundAndPattern(ctx, w, h, config.background, config.pattern);
 
+	const tone = getBackgroundTone(config.background);
 	const { phone: p } = getLayout(config.layout, w, h);
 
 	const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1, rotation: null };
@@ -86,7 +87,7 @@ export function renderScreenshot(ctx, config, baseW, baseH) {
 	const phoneH = p.h * pt.scale;
 	const phoneAngle = pt.rotation != null ? pt.rotation : (p.angle || 0);
 
-	drawPhoneFrame(ctx, phoneX, phoneY, phoneW, phoneH, phoneAngle, p.perspective || false, config.images?.screenshot ?? null, config.phoneFrame);
+	drawPhoneFrame(ctx, phoneX, phoneY, phoneW, phoneH, phoneAngle, p.perspective || false, config.images?.screenshot ?? null, config.phoneFrame, tone);
 
 	renderTextOverlays(ctx, config.textOverlays, w, h, config);
 }
