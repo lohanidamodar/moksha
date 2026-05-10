@@ -70,6 +70,22 @@ export const SCREENSHOT_INPUTS = [
 	{ id: 'screenshot', type: 'image', label: 'Screenshot', placeholder: 'Upload a screenshot' }
 ];
 
+/**
+ * Returns the phone's effective rect on the canvas (center-anchored), accounting for
+ * the layout and any user transforms. Used for hit-testing and on-canvas selection.
+ */
+export function getScreenshotPhoneRect(config, w, h) {
+	const { phone: p } = getLayout(config.layout, w, h);
+	const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1, rotation: null };
+	return {
+		x: p.x + (pt.x / 100) * w,
+		y: p.y + (pt.y / 100) * h,
+		w: p.w * pt.scale,
+		h: p.h * pt.scale,
+		angle: pt.rotation != null ? pt.rotation : (p.angle || 0)
+	};
+}
+
 /** Shared render function */
 export function renderScreenshot(ctx, config, baseW, baseH) {
 	const w = baseW;
@@ -79,15 +95,9 @@ export function renderScreenshot(ctx, config, baseW, baseH) {
 
 	const tone = getBackgroundTone(config.background);
 	const { phone: p } = getLayout(config.layout, w, h);
+	const rect = getScreenshotPhoneRect(config, w, h);
 
-	const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1, rotation: null };
-	const phoneX = p.x + (pt.x / 100) * w;
-	const phoneY = p.y + (pt.y / 100) * h;
-	const phoneW = p.w * pt.scale;
-	const phoneH = p.h * pt.scale;
-	const phoneAngle = pt.rotation != null ? pt.rotation : (p.angle || 0);
-
-	drawPhoneFrame(ctx, phoneX, phoneY, phoneW, phoneH, phoneAngle, p.perspective || false, config.images?.screenshot ?? null, config.phoneFrame, tone);
+	drawPhoneFrame(ctx, rect.x, rect.y, rect.w, rect.h, rect.angle, p.perspective || false, config.images?.screenshot ?? null, config.phoneFrame, tone);
 
 	renderTextOverlays(ctx, config.textOverlays, w, h, config);
 }

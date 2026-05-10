@@ -33,28 +33,32 @@
 				<span class="slider-label">X</span>
 				<input type="range" class="slider" min="-50" max="50" step="1"
 					value={t.phone.x}
-					oninput={(e) => editor.setTransform('phone', 'x', +e.target.value)} />
+					oninput={(e) => editor.setTransform('phone', 'x', +e.target.value)}
+					onchange={() => editor.commit()} />
 				<span class="slider-value">{t.phone.x}</span>
 			</div>
 			<div class="slider-row">
 				<span class="slider-label">Y</span>
 				<input type="range" class="slider" min="-50" max="50" step="1"
 					value={t.phone.y}
-					oninput={(e) => editor.setTransform('phone', 'y', +e.target.value)} />
+					oninput={(e) => editor.setTransform('phone', 'y', +e.target.value)}
+					onchange={() => editor.commit()} />
 				<span class="slider-value">{t.phone.y}</span>
 			</div>
 			<div class="slider-row">
 				<span class="slider-label">Size</span>
 				<input type="range" class="slider" min="0.3" max="2" step="0.05"
 					value={t.phone.scale}
-					oninput={(e) => editor.setTransform('phone', 'scale', +e.target.value)} />
+					oninput={(e) => editor.setTransform('phone', 'scale', +e.target.value)}
+					onchange={() => editor.commit()} />
 				<span class="slider-value">{Math.round(t.phone.scale * 100)}%</span>
 			</div>
 			<div class="slider-row">
 				<span class="slider-label">Rotate</span>
 				<input type="range" class="slider" min="-45" max="45" step="1"
 					value={effectivePhoneRotation}
-					oninput={(e) => editor.setTransform('phone', 'rotation', +e.target.value)} />
+					oninput={(e) => editor.setTransform('phone', 'rotation', +e.target.value)}
+					onchange={() => editor.commit()} />
 				<span class="slider-value">{effectivePhoneRotation}°</span>
 			</div>
 		</div>
@@ -67,28 +71,32 @@
 				<span class="slider-label">X</span>
 				<input type="range" class="slider" min="-50" max="50" step="1"
 					value={t.logo.x}
-					oninput={(e) => editor.setTransform('logo', 'x', +e.target.value)} />
+					oninput={(e) => editor.setTransform('logo', 'x', +e.target.value)}
+					onchange={() => editor.commit()} />
 				<span class="slider-value">{t.logo.x}</span>
 			</div>
 			<div class="slider-row">
 				<span class="slider-label">Y</span>
 				<input type="range" class="slider" min="-50" max="50" step="1"
 					value={t.logo.y}
-					oninput={(e) => editor.setTransform('logo', 'y', +e.target.value)} />
+					oninput={(e) => editor.setTransform('logo', 'y', +e.target.value)}
+					onchange={() => editor.commit()} />
 				<span class="slider-value">{t.logo.y}</span>
 			</div>
 			<div class="slider-row">
 				<span class="slider-label">Size</span>
 				<input type="range" class="slider" min="0.3" max="2" step="0.05"
 					value={t.logo.scale}
-					oninput={(e) => editor.setTransform('logo', 'scale', +e.target.value)} />
+					oninput={(e) => editor.setTransform('logo', 'scale', +e.target.value)}
+					onchange={() => editor.commit()} />
 				<span class="slider-value">{Math.round(t.logo.scale * 100)}%</span>
 			</div>
 			<div class="slider-row">
 				<span class="slider-label">Rotate</span>
 				<input type="range" class="slider" min="-45" max="45" step="1"
 					value={effectiveLogoRotation}
-					oninput={(e) => editor.setTransform('logo', 'rotation', +e.target.value)} />
+					oninput={(e) => editor.setTransform('logo', 'rotation', +e.target.value)}
+					onchange={() => editor.commit()} />
 				<span class="slider-value">{effectiveLogoRotation}°</span>
 			</div>
 		</div>
@@ -96,8 +104,8 @@
 
 	{#if hasPhone || hasLogo}
 		<div class="reset-row">
-			<button class="reset-btn" onclick={() => editor.resetCurrentTransforms()}>Reset Layout</button>
-			<button class="reset-btn" onclick={() => editor.resetAllTransforms()}>Reset All</button>
+			<button class="reset-btn" onclick={() => { editor.resetCurrentTransforms(); editor.commit(); }}>Reset Layout</button>
+			<button class="reset-btn" onclick={() => { editor.resetAllTransforms(); editor.commit(); }}>Reset All</button>
 		</div>
 	{/if}
 </div>

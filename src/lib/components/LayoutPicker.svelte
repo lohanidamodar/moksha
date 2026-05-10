@@ -12,6 +12,7 @@
 
 	function selectLayout(id) {
 		editor.layout = id;
+		editor.commit();
 	}
 
 	function duplicateCurrent() {

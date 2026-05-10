@@ -15,6 +15,10 @@
 		if (mod?.defaultPhoneFrame) {
 			editor.phoneFrame = mod.defaultPhoneFrame;
 		}
+		// Clear any selection that may not apply to the new asset type
+		editor.selectedOverlayId = null;
+		editor.selectedElement = null;
+		editor.commit();
 	}
 </script>
 
@@ -29,6 +33,27 @@
 				<option value={assetType.id}>{assetType.icon}  {assetType.label}</option>
 			{/each}
 		</select>
+	</div>
+
+	<div class="header-right">
+		<button
+			class="icon-btn"
+			disabled={!editor.canUndo}
+			onclick={() => editor.undo()}
+			title="Undo (⌘Z)"
+			aria-label="Undo"
+		>
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+		</button>
+		<button
+			class="icon-btn"
+			disabled={!editor.canRedo}
+			onclick={() => editor.redo()}
+			title="Redo (⌘⇧Z)"
+			aria-label="Redo"
+		>
+			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.13-9.36L23 10"/></svg>
+		</button>
 	</div>
 </header>
 
@@ -58,6 +83,38 @@
 
 	.header-center {
 		flex: 1;
+	}
+
+	.header-right {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		flex-shrink: 0;
+	}
+
+	.icon-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 30px;
+		height: 30px;
+		border: 1px solid var(--border, #2e2e36);
+		border-radius: 7px;
+		background: var(--bg-card, #222228);
+		color: var(--text-secondary, #9d9baa);
+		cursor: pointer;
+		transition: all 0.15s;
+		padding: 0;
+	}
+
+	.icon-btn:hover:not(:disabled) {
+		border-color: var(--border-hover, #444);
+		color: var(--text-primary, #f0eff4);
+	}
+
+	.icon-btn:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
 	}
 
 	.asset-select {

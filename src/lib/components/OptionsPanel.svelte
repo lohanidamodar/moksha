@@ -54,6 +54,7 @@
 		} else {
 			editor.pattern = null;
 		}
+		editor.commit();
 	}
 
 	function handleAddToQueue() {
@@ -94,7 +95,7 @@
 				<select
 					class="format-select"
 					value={currentSizeId}
-					onchange={(e) => editor.sizeId = e.target.value}
+					onchange={(e) => { editor.sizeId = e.target.value; editor.commit(); }}
 				>
 					{#each sizes as size (size.id)}
 						<option value={size.id}>{size.label}</option>
@@ -136,7 +137,7 @@
 				<select
 					class="format-select"
 					value={editor.phoneFrame}
-					onchange={(e) => editor.phoneFrame = e.target.value}
+					onchange={(e) => { editor.phoneFrame = e.target.value; editor.commit(); }}
 				>
 					{#each availableFrames as frame}
 						<option value={frame.id}>{frame.label}</option>

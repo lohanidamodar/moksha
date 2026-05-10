@@ -5,8 +5,12 @@
 
 	let selected = $derived(editor.textOverlays.find((o) => o.id === editor.selectedOverlayId) ?? null);
 
+	const COALESCE_FIELDS = new Set(['text', 'fontSize', 'rotation', 'color']);
+	let _coalesceTimer = null;
+
 	function addAtCenter() {
 		editor.addOverlay({ text: 'New Text', x: 0.5, y: 0.5, align: 'center' });
+		editor.commit();
 	}
 
 	function selectOverlay(id) {
@@ -26,10 +30,21 @@
 			patch.anchor = undefined;
 		}
 		editor.updateOverlay(selected.id, patch);
+
+		// Continuous fields (typing, color picker, sliders) coalesce into one history entry.
+		if (COALESCE_FIELDS.has(field)) {
+			if (_coalesceTimer) clearTimeout(_coalesceTimer);
+			_coalesceTimer = setTimeout(() => editor.commit(), 350);
+		} else {
+			editor.commit();
+		}
 	}
 
 	function removeSelected() {
-		if (selected) editor.removeOverlay(selected.id);
+		if (selected) {
+			editor.removeOverlay(selected.id);
+			editor.commit();
+		}
 	}
 
 	const ALIGNS = [

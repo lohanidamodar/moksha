@@ -16,6 +16,7 @@
 
 	function select(type, id) {
 		editor.background = { type, id };
+		editor.commit();
 	}
 
 	let customColor = $derived(
@@ -24,8 +25,12 @@
 			: '#3b82f6'
 	);
 
+	let _customColorTimer = null;
 	function selectCustomColor(color) {
 		editor.background = { type: 'solid', id: 'custom', color };
+		// Coalesce rapid color-picker drags into one history entry
+		if (_customColorTimer) clearTimeout(_customColorTimer);
+		_customColorTimer = setTimeout(() => editor.commit(), 250);
 	}
 
 	function meshSwatchStyle(m) {

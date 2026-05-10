@@ -6,6 +6,7 @@
 
 	function select(id) {
 		editor.pattern = id ? { id } : null;
+		editor.commit();
 	}
 
 	// CSS hint for pattern preview swatches (rough visual approximation)
