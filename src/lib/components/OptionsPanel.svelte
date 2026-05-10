@@ -272,7 +272,7 @@
 	}
 
 	.format-select:hover {
-		border-color: #444;
+		border-color: var(--border-hover, #444);
 	}
 
 	.format-select:focus {
@@ -354,6 +354,6 @@
 	}
 
 	.add-queue-btn:hover {
-		background: #ea6c10;
+		background: var(--accent-hover, #ea6c10);
 	}
 </style>

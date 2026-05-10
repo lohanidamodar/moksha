@@ -211,7 +211,7 @@
 		cursor: pointer;
 		display: flex; align-items: center; gap: 8px;
 	}
-	.overlay-row:hover { border-color: #444; }
+	.overlay-row:hover { border-color: var(--border-hover, #444); }
 	.overlay-row.active { border-color: var(--accent, #f97316); color: var(--text-primary, #f0eff4); }
 
 	.overlay-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -262,7 +262,7 @@
 		font-size: 11px; font-weight: 600;
 		cursor: pointer;
 	}
-	.align-btn:hover { border-color: #444; }
+	.align-btn:hover { border-color: var(--border-hover, #444); }
 	.align-btn.active { border-color: var(--accent, #f97316); color: var(--accent, #f97316); }
 
 	.color-row { display: flex; align-items: center; gap: 6px; }
@@ -293,10 +293,10 @@
 		border: 1px solid var(--border, #2e2e36);
 		border-radius: 6px;
 		background: transparent;
-		color: #ef4444;
+		color: var(--danger, #ef4444);
 		font-family: var(--font, 'Inter'), sans-serif;
 		font-size: 11px; font-weight: 600;
 		cursor: pointer;
 	}
-	.delete-btn:hover { border-color: #ef4444; }
+	.delete-btn:hover { border-color: var(--danger, #ef4444); }
 </style>

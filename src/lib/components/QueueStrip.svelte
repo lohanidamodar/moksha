@@ -152,7 +152,7 @@
 	}
 
 	.strip-btn.primary:hover {
-		background: #ea6c10;
+		background: var(--accent-hover, #ea6c10);
 	}
 
 	.strip-btn:disabled {
@@ -180,7 +180,7 @@
 	}
 
 	.queue-card:hover {
-		border-color: #444;
+		border-color: var(--border-hover, #444);
 	}
 
 	.queue-card.editing {
@@ -190,7 +190,7 @@
 	.card-thumb {
 		width: 100%;
 		height: 90px;
-		background: #111114;
+		background: var(--bg-canvas, #111114);
 		overflow: hidden;
 	}
 
@@ -250,7 +250,7 @@
 	.action-btn.edit:hover { background: rgba(59, 130, 246, 0.15); color: var(--blue, #3b82f6); }
 	.action-btn.duplicate:hover { background: rgba(34, 197, 94, 0.15); color: var(--green, #22c55e); }
 	.action-btn.download:hover { background: rgba(249, 115, 22, 0.15); color: var(--accent, #f97316); }
-	.action-btn.delete:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+	.action-btn.delete:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger, #ef4444); }
 
 	.empty {
 		padding: 4px 12px 10px;

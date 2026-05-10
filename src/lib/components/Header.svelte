@@ -79,7 +79,7 @@
 	}
 
 	.asset-select:hover {
-		border-color: #444;
+		border-color: var(--border-hover, #444);
 	}
 
 	.asset-select:focus {

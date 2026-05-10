@@ -192,7 +192,7 @@
 	}
 
 	.reset-btn:hover {
-		border-color: #444;
+		border-color: var(--border-hover, #444);
 		color: var(--text-primary, #f0eff4);
 	}
 </style>

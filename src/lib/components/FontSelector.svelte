@@ -100,7 +100,7 @@
 	}
 
 	.selected-font:hover {
-		border-color: #444;
+		border-color: var(--border-hover, #444);
 	}
 
 	.font-preview {

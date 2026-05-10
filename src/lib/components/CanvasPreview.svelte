@@ -320,7 +320,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: #111114;
+		background: var(--bg-canvas, #111114);
 		overflow: auto;
 		min-height: 0;
 		position: relative;
