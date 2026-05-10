@@ -265,6 +265,30 @@
 			const ratio = curDist / startDist;
 			const newScale = clamp(drag.startScale * ratio, PHONE_SCALE_MIN, PHONE_SCALE_MAX);
 			editor.setTransform('phone', 'scale', +newScale.toFixed(2));
+		} else if (drag.mode === 'phone-rotate') {
+			if (!phoneRect) return;
+			const ax = phoneRect.x;
+			const ay = phoneRect.y;
+			const startAngle = Math.atan2(drag.startPy - ay, drag.startPx - ax);
+			const curAngle = Math.atan2(py - ay, px - ax);
+			let deltaDeg = ((curAngle - startAngle) * 180) / Math.PI;
+			let next = drag.startRotation + deltaDeg;
+			// Snap to 5° increments while holding Shift; clamp slider range -45..45
+			next = clamp(Math.round(next), -45, 45);
+			editor.setTransform('phone', 'rotation', next);
+		} else if (drag.mode === 'overlay-rotate') {
+			const overlay = editor.textOverlays.find((o) => o.id === drag.id);
+			if (!overlay) return;
+			const ax = (overlay.x ?? 0.5) * renderSize.w;
+			const ay = (overlay.y ?? 0.5) * renderSize.h;
+			const startAngle = Math.atan2(drag.startPy - ay, drag.startPx - ax);
+			const curAngle = Math.atan2(py - ay, px - ax);
+			let deltaDeg = ((curAngle - startAngle) * 180) / Math.PI;
+			let next = drag.startRotation + deltaDeg;
+			// Normalize to -180..180
+			while (next > 180) next -= 360;
+			while (next < -180) next += 360;
+			editor.updateOverlay(drag.id, { rotation: Math.round(next) });
 		}
 	}
 
@@ -302,6 +326,38 @@
 			startPx: px,
 			startPy: py,
 			startScale: t.phone.scale ?? 1
+		};
+		canvas.setPointerCapture(e.pointerId);
+		e.stopPropagation();
+		e.preventDefault();
+	}
+
+	function handlePhoneRotateHandlePointerDown(e) {
+		if (!canvas || !phoneRect) return;
+		const { px, py } = pointerToCanvas(e);
+		const t = editor.getTransforms(editor.layout);
+		drag = {
+			mode: 'phone-rotate',
+			startPx: px,
+			startPy: py,
+			startRotation: t.phone.rotation != null ? t.phone.rotation : (phoneRect.angle ?? 0)
+		};
+		canvas.setPointerCapture(e.pointerId);
+		e.stopPropagation();
+		e.preventDefault();
+	}
+
+	function handleOverlayRotateHandlePointerDown(e) {
+		if (!canvas) return;
+		const sel = editor.textOverlays.find((o) => o.id === editor.selectedOverlayId);
+		if (!sel) return;
+		const { px, py } = pointerToCanvas(e);
+		drag = {
+			mode: 'overlay-rotate',
+			id: sel.id,
+			startPx: px,
+			startPy: py,
+			startRotation: sel.rotation ?? 0
 		};
 		canvas.setPointerCapture(e.pointerId);
 		e.stopPropagation();
@@ -420,6 +476,13 @@
 				style="left: {phoneSelectionBox.cx - phoneSelectionBox.w / 2}px; top: {phoneSelectionBox.cy - phoneSelectionBox.h / 2}px; width: {phoneSelectionBox.w}px; height: {phoneSelectionBox.h}px; transform: rotate({phoneSelectionBox.rotation}deg);"
 			>
 				<button
+					class="rotate-handle"
+					aria-label="Rotate phone"
+					onpointerdown={handlePhoneRotateHandlePointerDown}
+				>
+					<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7"/><polyline points="21 4 21 10 15 10"/></svg>
+				</button>
+				<button
 					class="scale-handle"
 					aria-label="Resize phone"
 					onpointerdown={handlePhoneScaleHandlePointerDown}
@@ -432,6 +495,13 @@
 				class="selection-box"
 				style="left: {selectionBox.x}px; top: {selectionBox.y}px; width: {selectionBox.w}px; height: {selectionBox.h}px; transform: rotate({selectionBox.rotation}deg); transform-origin: {selectionBox.anchorX - selectionBox.x}px {selectionBox.anchorY - selectionBox.y}px;"
 			>
+				<button
+					class="rotate-handle"
+					aria-label="Rotate text"
+					onpointerdown={handleOverlayRotateHandlePointerDown}
+				>
+					<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7"/><polyline points="21 4 21 10 15 10"/></svg>
+				</button>
 				<button
 					class="resize-handle"
 					aria-label="Resize text"
@@ -543,6 +613,29 @@
 		cursor: nwse-resize;
 		padding: 0;
 		pointer-events: auto;
+	}
+
+	.rotate-handle {
+		position: absolute;
+		top: -28px;
+		left: 50%;
+		transform: translateX(-50%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 18px;
+		height: 18px;
+		border: 2px solid var(--bg, #0f0f11);
+		border-radius: 50%;
+		background: var(--accent, #f97316);
+		color: #fff;
+		cursor: grab;
+		padding: 0;
+		pointer-events: auto;
+	}
+
+	.rotate-handle:active {
+		cursor: grabbing;
 	}
 
 	.inline-editor {
