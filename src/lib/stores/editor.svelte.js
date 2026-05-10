@@ -13,6 +13,13 @@ const DEFAULTS = {
 	editingQueueId: null
 };
 
+const HISTORY_LIMIT = 50;
+const HISTORY_FIELDS = [
+	'assetType', 'sizeId', 'layout', 'background', 'pattern',
+	'phoneFrame', 'layoutTransforms', 'images', 'textOverlays',
+	'selectedOverlayId', 'editingQueueId'
+];
+
 let _overlayCounter = 0;
 function nextOverlayId() {
 	_overlayCounter += 1;
@@ -55,11 +62,24 @@ class EditorState {
 	textOverlays = $state([]);
 	selectedOverlayId = $state(null);
 	editingQueueId = $state(DEFAULTS.editingQueueId);
+	// Selection target on canvas: 'phone' or null (text uses selectedOverlayId)
+	selectedElement = $state(null);
+
+	canUndo = $state(false);
+	canRedo = $state(false);
+	#history = [];
+	#historyIndex = -1;
+	#applying = false;
+
+	constructor() {
+		this.commit();
+	}
 
 	addOverlay(overrides = {}) {
 		const overlay = defaultOverlay(overrides);
 		this.textOverlays.push(overlay);
 		this.selectedOverlayId = overlay.id;
+		this.selectedElement = null;
 		return overlay;
 	}
 
@@ -72,6 +92,15 @@ class EditorState {
 	removeOverlay(id) {
 		this.textOverlays = this.textOverlays.filter((o) => o.id !== id);
 		if (this.selectedOverlayId === id) this.selectedOverlayId = null;
+	}
+
+	duplicateOverlay(id) {
+		const src = this.textOverlays.find((o) => o.id === id);
+		if (!src) return null;
+		const copy = { ...structuredClone(src), id: nextOverlayId(), x: (src.x ?? 0.5) + 0.04, y: (src.y ?? 0.5) + 0.04, anchor: undefined };
+		this.textOverlays.push(copy);
+		this.selectedOverlayId = copy.id;
+		return copy;
 	}
 
 	getSelectedOverlay() {
@@ -114,6 +143,7 @@ class EditorState {
 		this.images = { ...DEFAULTS.images };
 		this.textOverlays = [];
 		this.selectedOverlayId = null;
+		this.selectedElement = null;
 		this.editingQueueId = DEFAULTS.editingQueueId;
 	}
 
@@ -135,7 +165,66 @@ class EditorState {
 		this.images = { ...item.images };
 		this.textOverlays = item.textOverlays ? structuredClone(item.textOverlays) : [];
 		this.selectedOverlayId = null;
+		this.selectedElement = null;
 		this.editingQueueId = item.id;
+	}
+
+	#snapshot() {
+		const out = {};
+		for (const k of HISTORY_FIELDS) out[k] = $state.snapshot(this[k]);
+		return out;
+	}
+
+	#restore(snap) {
+		this.#applying = true;
+		try {
+			for (const k of HISTORY_FIELDS) this[k] = structuredClone(snap[k]);
+		} finally {
+			this.#applying = false;
+		}
+	}
+
+	/**
+	 * Record the current state as an undo checkpoint.
+	 * Call this AFTER a user-meaningful change (drag end, slider commit, click pick).
+	 * No-op while undo/redo is replaying state.
+	 */
+	commit() {
+		if (this.#applying) return;
+		const snap = this.#snapshot();
+		const top = this.#history[this.#historyIndex];
+		if (top && JSON.stringify(top) === JSON.stringify(snap)) return;
+		// Drop the redo branch
+		if (this.#historyIndex < this.#history.length - 1) {
+			this.#history.length = this.#historyIndex + 1;
+		}
+		this.#history.push(snap);
+		this.#historyIndex = this.#history.length - 1;
+		// Cap history size from the bottom
+		if (this.#history.length > HISTORY_LIMIT) {
+			this.#history.shift();
+			this.#historyIndex--;
+		}
+		this.#updateFlags();
+	}
+
+	undo() {
+		if (this.#historyIndex <= 0) return;
+		this.#historyIndex--;
+		this.#restore(this.#history[this.#historyIndex]);
+		this.#updateFlags();
+	}
+
+	redo() {
+		if (this.#historyIndex >= this.#history.length - 1) return;
+		this.#historyIndex++;
+		this.#restore(this.#history[this.#historyIndex]);
+		this.#updateFlags();
+	}
+
+	#updateFlags() {
+		this.canUndo = this.#historyIndex > 0;
+		this.canRedo = this.#historyIndex < this.#history.length - 1;
 	}
 }
 

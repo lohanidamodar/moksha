@@ -19,8 +19,11 @@ Moksha splits screenshot mockups by device family — each has its own frame def
 |---|---|---|
 | `iphone-screenshot` | iPhone 6.7", 6.5", 6.1", 5.5" | iPhone Dynamic Island |
 | `ipad-screenshot` | iPad Pro 12.9", iPad 10.5" | iPad |
+| `apple-watch` | Watch Ultra/49mm, Watch S10 46mm, Watch S10 42mm | Apple Watch (Aluminum) |
 | `android-phone-screenshot` | Android Phone 1080x1920 | Android Punch Hole |
 | `android-tablet-screenshot` | Android 7" (1200x1920), 10" (1600x2560) | Android Clean |
+| `galaxy-fold-screenshot` | Z Fold Open 2208x1768 | Galaxy Z Fold |
+| `desktop-screenshot` | 1280x800, 1440x900, 1920x1080, 2560x1600 | Mac Browser |
 | `feature-graphic` | Play Store 1024x500 | n/a |
 | `promo-banner` | 1024x500, 1024x1024 | optional phone frame |
 | `app-icon-showcase` | 1024x1024, 512x512 | n/a |
@@ -179,10 +182,15 @@ curl -X POST http://localhost:5173/api/render \
 
 **iPad (3):** `ipad` (Space Gray), `ipad-silver`, `ipad-gold`
 
-**Android (10):**
+**Apple Watch (2):** `apple-watch` (Aluminum), `apple-watch-titanium`
+
+**Android (11):**
 - Pixel: `pixel` (Cream), `pixel-black` (Obsidian), `pixel-white` (Porcelain) — with horizontal camera bar
 - Galaxy: `galaxy` (Titanium), `galaxy-black` (Phantom Black), `galaxy-white` (Phantom White) — centered punch hole
+- Foldable: `galaxy-fold` (open) — wide tablet display with subtle fold seam
 - Other: `oneplus` (corner punch hole), `android-waterdrop` (teardrop notch), `android-punch-hole`, `android-clean`
+
+**Desktop (2):** `desktop-mac` (traffic lights + URL bar), `desktop-windows` (min/max/close + URL bar)
 
 **Universal (2):** `frameless` (no body, soft shadow only), `frameless-bordered` (no body + thin auto-contrast outline)
 
@@ -252,6 +260,13 @@ You can override pattern color and opacity: `{ "id": "dots", "color": "#fff", "o
 ### Fonts
 
 The renderer accepts any Google Font. Common picks: `Inter`, `Montserrat`, `Open Sans`, `Bebas Neue`, `Lato`, `Poppins`, `Playfair Display`. Set via `textOverlays[].font`.
+
+## Exporting
+
+From the editor's queue strip:
+
+- **ZIP** — every queued mockup, rendered at every size variant of its asset type, packaged into a folder structure (`ios/`, `android/`, `desktop/`, `social/`, ...) plus a `manifest.json`.
+- **PDF** — every queued mockup written into one multi-page PDF, one page per (mockup × size). Each page is sized to the asset's native pixel dimensions, so the PDF stays sharp at any zoom and is ready to drop into a client review deck.
 
 ## Building
 

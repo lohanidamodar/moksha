@@ -1,4 +1,4 @@
-import { renderScreenshot, SCREENSHOT_LAYOUTS, SCREENSHOT_INPUTS } from './_screenshot-shared.js';
+import { renderScreenshot, getScreenshotPhoneRect, SCREENSHOT_LAYOUTS, SCREENSHOT_INPUTS } from './_screenshot-shared.js';
 
 export default {
 	id: 'android-tablet-screenshot',
@@ -13,5 +13,6 @@ export default {
 	],
 	inputs: SCREENSHOT_INPUTS,
 	layouts: SCREENSHOT_LAYOUTS,
-	render: renderScreenshot
+	render: renderScreenshot,
+	getPhoneRect: getScreenshotPhoneRect
 };

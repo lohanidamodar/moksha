@@ -2,7 +2,7 @@
 	import { editor } from '$lib/stores/editor.svelte.js';
 	import { queue } from '$lib/stores/queue.svelte.js';
 	import { getAssetType } from '$lib/assets/index.js';
-	import { exportZip, downloadIndividual } from '$lib/renderer/export.js';
+	import { exportZip, exportPdf, downloadIndividual } from '$lib/renderer/export.js';
 
 	let exporting = $state(false);
 	let exportProgress = $state('');
@@ -20,21 +20,25 @@
 		editor.loadFromQueue(item);
 	}
 
-	async function handleExportZip() {
+	async function runExport(fn, label) {
 		if (queue.count === 0 || exporting) return;
 		exporting = true;
 		exportProgress = 'Starting...';
 		try {
-			await exportZip(queue.items, (current, total, label) => {
-				exportProgress = `${current}/${total}: ${label}`;
+			await fn(queue.items, (current, total, msg) => {
+				exportProgress = `${current}/${total}: ${msg}`;
 			});
 		} catch (err) {
-			console.error('Export failed:', err);
+			console.error(`${label} export failed:`, err);
+			exportProgress = 'Export failed';
 		} finally {
 			exporting = false;
-			exportProgress = '';
+			setTimeout(() => { if (!exporting) exportProgress = ''; }, 1500);
 		}
 	}
+
+	function handleExportZip() { return runExport(exportZip, 'ZIP'); }
+	function handleExportPdf() { return runExport(exportPdf, 'PDF'); }
 </script>
 
 <div class="queue-strip">
@@ -46,6 +50,10 @@
 					<span class="export-progress">{exportProgress}</span>
 				{/if}
 				<button class="strip-btn" onclick={() => queue.clear()}>Clear</button>
+				<button class="strip-btn" onclick={handleExportPdf} disabled={exporting} title="Export queue as multi-page PDF">
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+					PDF
+				</button>
 				<button class="strip-btn primary" onclick={handleExportZip} disabled={exporting}>
 					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 					ZIP
@@ -152,7 +160,7 @@
 	}
 
 	.strip-btn.primary:hover {
-		background: #ea6c10;
+		background: var(--accent-hover, #ea6c10);
 	}
 
 	.strip-btn:disabled {
@@ -180,7 +188,7 @@
 	}
 
 	.queue-card:hover {
-		border-color: #444;
+		border-color: var(--border-hover, #444);
 	}
 
 	.queue-card.editing {
@@ -190,7 +198,7 @@
 	.card-thumb {
 		width: 100%;
 		height: 90px;
-		background: #111114;
+		background: var(--bg-canvas, #111114);
 		overflow: hidden;
 	}
 
@@ -250,7 +258,7 @@
 	.action-btn.edit:hover { background: rgba(59, 130, 246, 0.15); color: var(--blue, #3b82f6); }
 	.action-btn.duplicate:hover { background: rgba(34, 197, 94, 0.15); color: var(--green, #22c55e); }
 	.action-btn.download:hover { background: rgba(249, 115, 22, 0.15); color: var(--accent, #f97316); }
-	.action-btn.delete:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+	.action-btn.delete:hover { background: rgba(239, 68, 68, 0.15); color: var(--danger, #ef4444); }
 
 	.empty {
 		padding: 4px 12px 10px;

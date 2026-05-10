@@ -116,13 +116,13 @@
 		padding: 6px;
 		border: 2px solid var(--border, #2e2e36);
 		border-radius: 6px;
-		background: #111114;
+		background: var(--bg-canvas, #111114);
 		cursor: pointer;
 		transition: border-color 0.15s;
 	}
 
 	.size-card:hover {
-		border-color: #444;
+		border-color: var(--border-hover, #444);
 	}
 
 	.size-card.active {

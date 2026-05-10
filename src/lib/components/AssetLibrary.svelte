@@ -159,7 +159,7 @@
 	}
 
 	.thumb-remove:hover {
-		background: #ef4444;
+		background: var(--danger, #ef4444);
 	}
 
 	.empty-drop {

@@ -54,6 +54,7 @@
 		} else {
 			editor.pattern = null;
 		}
+		editor.commit();
 	}
 
 	function handleAddToQueue() {
@@ -94,7 +95,7 @@
 				<select
 					class="format-select"
 					value={currentSizeId}
-					onchange={(e) => editor.sizeId = e.target.value}
+					onchange={(e) => { editor.sizeId = e.target.value; editor.commit(); }}
 				>
 					{#each sizes as size (size.id)}
 						<option value={size.id}>{size.label}</option>
@@ -136,7 +137,7 @@
 				<select
 					class="format-select"
 					value={editor.phoneFrame}
-					onchange={(e) => editor.phoneFrame = e.target.value}
+					onchange={(e) => { editor.phoneFrame = e.target.value; editor.commit(); }}
 				>
 					{#each availableFrames as frame}
 						<option value={frame.id}>{frame.label}</option>
@@ -272,7 +273,7 @@
 	}
 
 	.format-select:hover {
-		border-color: #444;
+		border-color: var(--border-hover, #444);
 	}
 
 	.format-select:focus {
@@ -354,6 +355,6 @@
 	}
 
 	.add-queue-btn:hover {
-		background: #ea6c10;
+		background: var(--accent-hover, #ea6c10);
 	}
 </style>

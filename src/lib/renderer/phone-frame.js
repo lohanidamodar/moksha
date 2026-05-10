@@ -18,6 +18,8 @@ const BODY_COLORS = {
 	'dark-android': ['#2a2a2e', '#1a1a1e', '#111114'],
 	'pixel-cream': ['#f0e8de', '#d6cfc4', '#a8a39a'],
 	'graphite': ['#2c2c2e', '#1c1c1e', '#0e0e10'],
+	'aluminum-light': ['#dadcde', '#bcc0c4', '#92979c'],
+	'aluminum-dark':  ['#2c2e30', '#1a1c1f', '#0f1113']
 };
 
 export const PHONE_FRAMES = [
@@ -33,6 +35,9 @@ export const PHONE_FRAMES = [
 	{ id: 'ipad', label: 'iPad Space Gray', platform: 'ios' },
 	{ id: 'ipad-silver', label: 'iPad Silver', platform: 'ios' },
 	{ id: 'ipad-gold', label: 'iPad Gold', platform: 'ios' },
+	// Apple Watch
+	{ id: 'apple-watch', label: 'Apple Watch (Aluminum)', platform: 'ios' },
+	{ id: 'apple-watch-titanium', label: 'Apple Watch (Titanium)', platform: 'ios' },
 	// Android — Pixel
 	{ id: 'pixel', label: 'Pixel Cream', platform: 'android' },
 	{ id: 'pixel-black', label: 'Pixel Obsidian', platform: 'android' },
@@ -41,11 +46,16 @@ export const PHONE_FRAMES = [
 	{ id: 'galaxy', label: 'Galaxy Titanium', platform: 'android' },
 	{ id: 'galaxy-black', label: 'Galaxy Phantom Black', platform: 'android' },
 	{ id: 'galaxy-white', label: 'Galaxy Phantom White', platform: 'android' },
+	// Android — Foldables
+	{ id: 'galaxy-fold', label: 'Galaxy Z Fold (Open)', platform: 'android' },
 	// Android — Other styles
 	{ id: 'oneplus', label: 'OnePlus / Nothing (Corner Cam)', platform: 'android' },
 	{ id: 'android-waterdrop', label: 'Android Waterdrop Notch', platform: 'android' },
 	{ id: 'android-punch-hole', label: 'Android Punch Hole', platform: 'android' },
 	{ id: 'android-clean', label: 'Android Clean', platform: 'android' },
+	// Desktop browsers
+	{ id: 'desktop-mac', label: 'Mac Browser', platform: 'desktop' },
+	{ id: 'desktop-windows', label: 'Windows Browser', platform: 'desktop' },
 	// Universal
 	{ id: 'frameless', label: 'Frameless', platform: 'any' },
 	{ id: 'frameless-bordered', label: 'Frameless (Bordered)', platform: 'any' },
@@ -60,14 +70,19 @@ function getBodyColors(frameStyle) {
 	if (frameStyle === 'ipad') return BODY_COLORS.titanium;
 	if (frameStyle === 'ipad-silver') return BODY_COLORS.silver;
 	if (frameStyle === 'ipad-gold') return BODY_COLORS.gold;
+	if (frameStyle === 'apple-watch') return BODY_COLORS['aluminum-dark'];
+	if (frameStyle === 'apple-watch-titanium') return BODY_COLORS.natural;
 	if (frameStyle === 'pixel') return BODY_COLORS['pixel-cream'];
 	if (frameStyle === 'pixel-black') return BODY_COLORS.graphite;
 	if (frameStyle === 'pixel-white') return BODY_COLORS.white;
 	if (frameStyle === 'galaxy') return BODY_COLORS.titanium;
 	if (frameStyle === 'galaxy-black') return BODY_COLORS.graphite;
 	if (frameStyle === 'galaxy-white') return BODY_COLORS.white;
+	if (frameStyle === 'galaxy-fold') return BODY_COLORS.graphite;
 	if (frameStyle === 'oneplus') return BODY_COLORS['dark-android'];
 	if (frameStyle === 'android-waterdrop') return BODY_COLORS['dark-android'];
+	if (frameStyle === 'desktop-mac') return BODY_COLORS['aluminum-light'];
+	if (frameStyle === 'desktop-windows') return BODY_COLORS['aluminum-dark'];
 	return BODY_COLORS['dark-android'];
 }
 
@@ -76,8 +91,11 @@ function frameGroup(frameStyle) {
 	if (frameStyle.startsWith('iphone-dynamic-island')) return 'iphone-dynamic-island';
 	if (frameStyle.startsWith('iphone-notch')) return 'iphone-notch';
 	if (frameStyle.startsWith('ipad')) return 'ipad';
+	if (frameStyle.startsWith('apple-watch')) return 'apple-watch';
 	if (frameStyle.startsWith('pixel')) return 'pixel';
+	if (frameStyle === 'galaxy-fold') return 'galaxy-fold';
 	if (frameStyle.startsWith('galaxy')) return 'galaxy';
+	if (frameStyle.startsWith('desktop-')) return frameStyle;
 	return frameStyle;
 }
 
@@ -365,6 +383,172 @@ function getAndroidWaterdrop(l, t, w, h, cr) {
 	return { screen, overlay };
 }
 
+/** Apple Watch — squircle body with screen, digital crown + side button on right edge */
+function getAppleWatch(l, t, w, h, cr) {
+	const bs = w * 0.06;
+	const bt = w * 0.08;
+	const bb = w * 0.08;
+	const screen = {
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.8
+	};
+	function overlay(ctx) {
+		// Digital crown on the right edge — small squat cylinder
+		const crownW = w * 0.05;
+		const crownH = h * 0.08;
+		const crownX = l + w - crownW * 0.2;
+		const crownY = t + h * 0.30;
+		roundRect(ctx, crownX, crownY, crownW, crownH, crownW * 0.35);
+		const cg = ctx.createLinearGradient(crownX, crownY, crownX + crownW, crownY);
+		cg.addColorStop(0, '#5a5a5e');
+		cg.addColorStop(1, '#2a2a2e');
+		ctx.fillStyle = cg;
+		ctx.fill();
+		// Side button below crown
+		const sbW = crownW * 0.7;
+		const sbH = crownH * 0.55;
+		const sbX = l + w - sbW * 0.25;
+		const sbY = t + h * 0.55;
+		roundRect(ctx, sbX, sbY, sbW, sbH, sbW * 0.35);
+		ctx.fillStyle = cg;
+		ctx.fill();
+		// Strap stubs at top and bottom (subtle)
+		ctx.fillStyle = 'rgba(0,0,0,0.4)';
+		const stubW = w * 0.65, stubH = w * 0.04;
+		ctx.fillRect(l + (w - stubW) / 2, t - stubH * 0.3, stubW, stubH * 0.4);
+		ctx.fillRect(l + (w - stubW) / 2, t + h - stubH * 0.1, stubW, stubH * 0.4);
+	}
+	return { screen, overlay };
+}
+
+/** Galaxy Z Fold (open) — wide tablet-like display with a vertical fold seam in the middle */
+function getGalaxyFold(l, t, w, h, cr) {
+	const bs = w * 0.012;
+	const bt = w * 0.02;
+	const bb = w * 0.02;
+	const screen = {
+		sx: l + bs, sy: t + bt, sw: w - bs * 2, sh: h - bt - bb, sr: cr * 0.6
+	};
+	function overlay(ctx) {
+		// Subtle vertical fold seam down the center
+		const seamW = w * 0.0035;
+		const sg = ctx.createLinearGradient(-seamW * 4, 0, seamW * 4, 0);
+		sg.addColorStop(0, 'rgba(0,0,0,0)');
+		sg.addColorStop(0.5, 'rgba(0,0,0,0.18)');
+		sg.addColorStop(1, 'rgba(0,0,0,0)');
+		ctx.fillStyle = sg;
+		ctx.fillRect(-w * 0.02, t + bt, w * 0.04, h - bt - bb);
+		// Punch-hole camera near top-right
+		ctx.beginPath();
+		ctx.arc(l + w * 0.78, t + bt + w * 0.02, w * 0.01, 0, Math.PI * 2);
+		ctx.fillStyle = '#000';
+		ctx.fill();
+	}
+	return { screen, overlay };
+}
+
+/** Mac browser-style window — traffic lights at top-left, URL bar across the top */
+function getDesktopMac(l, t, w, h, cr) {
+	const chromeH = Math.min(h * 0.075, w * 0.05);
+	const bs = w * 0.005;
+	const bb = w * 0.005;
+	const screen = {
+		sx: l + bs, sy: t + chromeH, sw: w - bs * 2, sh: h - chromeH - bb, sr: cr * 0.4
+	};
+	function overlay(ctx) {
+		const cy = t + chromeH * 0.5;
+		// Traffic lights
+		const lr = chromeH * 0.18;
+		const lights = [
+			{ x: l + chromeH * 0.55, fill: '#ff5f57' },
+			{ x: l + chromeH * 0.55 + lr * 2.6, fill: '#febc2e' },
+			{ x: l + chromeH * 0.55 + lr * 5.2, fill: '#28c840' }
+		];
+		for (const lt of lights) {
+			ctx.beginPath();
+			ctx.arc(lt.x, cy, lr, 0, Math.PI * 2);
+			ctx.fillStyle = lt.fill;
+			ctx.fill();
+		}
+		// URL bar
+		const urlW = w * 0.55;
+		const urlH = chromeH * 0.55;
+		const urlX = l + (w - urlW) / 2;
+		const urlY = cy - urlH / 2;
+		roundRect(ctx, urlX, urlY, urlW, urlH, urlH / 2);
+		ctx.fillStyle = 'rgba(255,255,255,0.55)';
+		ctx.fill();
+		// Lock icon (simple circle)
+		ctx.beginPath();
+		ctx.arc(urlX + urlH * 0.7, cy, urlH * 0.18, 0, Math.PI * 2);
+		ctx.fillStyle = 'rgba(0,0,0,0.4)';
+		ctx.fill();
+		// URL placeholder text
+		ctx.fillStyle = 'rgba(0,0,0,0.55)';
+		ctx.font = `500 ${urlH * 0.42}px Inter, sans-serif`;
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'middle';
+		ctx.fillText('app.example.com', urlX + urlH * 1.1, cy);
+		ctx.textBaseline = 'alphabetic';
+	}
+	return { screen, overlay };
+}
+
+/** Windows browser-style window — minimize / maximize / close at top-right, URL bar across */
+function getDesktopWindows(l, t, w, h, cr) {
+	const chromeH = Math.min(h * 0.075, w * 0.05);
+	const bs = w * 0.005;
+	const bb = w * 0.005;
+	const screen = {
+		sx: l + bs, sy: t + chromeH, sw: w - bs * 2, sh: h - chromeH - bb, sr: cr * 0.25
+	};
+	function overlay(ctx) {
+		const cy = t + chromeH * 0.5;
+		const btnSize = chromeH * 0.45;
+		const btnY = cy - btnSize / 2;
+		const right = l + w;
+		// Close (×) — red on hover, neutral here
+		ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+		ctx.lineWidth = Math.max(1, w * 0.0015);
+		const closeX = right - btnSize - chromeH * 0.4;
+		ctx.beginPath();
+		ctx.moveTo(closeX, btnY);
+		ctx.lineTo(closeX + btnSize, btnY + btnSize);
+		ctx.moveTo(closeX + btnSize, btnY);
+		ctx.lineTo(closeX, btnY + btnSize);
+		ctx.stroke();
+		// Maximize (square)
+		const maxX = closeX - btnSize - chromeH * 0.4;
+		ctx.strokeRect(maxX, btnY, btnSize, btnSize);
+		// Minimize (line)
+		const minX = maxX - btnSize - chromeH * 0.4;
+		ctx.beginPath();
+		ctx.moveTo(minX, btnY + btnSize);
+		ctx.lineTo(minX + btnSize, btnY + btnSize);
+		ctx.stroke();
+		// URL bar
+		const urlW = w * 0.55;
+		const urlH = chromeH * 0.55;
+		const urlX = l + (w - urlW) / 2;
+		const urlY = cy - urlH / 2;
+		roundRect(ctx, urlX, urlY, urlW, urlH, urlH / 2);
+		ctx.fillStyle = 'rgba(255,255,255,0.18)';
+		ctx.fill();
+		// Lock icon
+		ctx.beginPath();
+		ctx.arc(urlX + urlH * 0.7, cy, urlH * 0.18, 0, Math.PI * 2);
+		ctx.fillStyle = 'rgba(255,255,255,0.6)';
+		ctx.fill();
+		// URL placeholder text
+		ctx.fillStyle = 'rgba(255,255,255,0.75)';
+		ctx.font = `500 ${urlH * 0.42}px Inter, sans-serif`;
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'middle';
+		ctx.fillText('app.example.com', urlX + urlH * 1.1, cy);
+		ctx.textBaseline = 'alphabetic';
+	}
+	return { screen, overlay };
+}
+
 // ============================================================
 // Main entry point
 // ============================================================
@@ -374,8 +558,14 @@ function getAndroidWaterdrop(l, t, w, h, cr) {
  */
 export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screenshotImg, frameStyle = 'iphone-notch', tone = 'dark') {
 	const isBodyless = frameStyle === 'frameless' || frameStyle === 'frameless-bordered';
+	const isWatch = frameStyle.startsWith('apple-watch');
+	const isDesktop = frameStyle.startsWith('desktop-');
 
-	const cr = isBodyless ? w * 0.03 : w * 0.05;
+	let cr;
+	if (isBodyless) cr = w * 0.03;
+	else if (isWatch) cr = w * 0.28;       // squircle
+	else if (isDesktop) cr = w * 0.012;    // subtle window corners
+	else cr = w * 0.05;
 
 	ctx.save();
 	ctx.translate(x, y);
@@ -409,12 +599,16 @@ export function drawPhoneFrame(ctx, x, y, w, h, angle, hasPerspective, screensho
 	switch (frameGroup(frameStyle)) {
 		case 'iphone-dynamic-island': frame = getIPhoneDynamicIsland(l, t, w, h, cr); break;
 		case 'ipad': frame = getIPad(l, t, w, h, cr); break;
+		case 'apple-watch': frame = getAppleWatch(l, t, w, h, cr); break;
 		case 'android-punch-hole': frame = getAndroidPunchHole(l, t, w, h, cr); break;
 		case 'android-clean': frame = getAndroidClean(l, t, w, h, cr); break;
 		case 'pixel': frame = getPixel(l, t, w, h, cr); break;
 		case 'galaxy': frame = getGalaxy(l, t, w, h, cr); break;
+		case 'galaxy-fold': frame = getGalaxyFold(l, t, w, h, cr); break;
 		case 'oneplus': frame = getOnePlus(l, t, w, h, cr); break;
 		case 'android-waterdrop': frame = getAndroidWaterdrop(l, t, w, h, cr); break;
+		case 'desktop-mac': frame = getDesktopMac(l, t, w, h, cr); break;
+		case 'desktop-windows': frame = getDesktopWindows(l, t, w, h, cr); break;
 		case 'frameless': frame = getFrameless(l, t, w, h, cr); break;
 		case 'frameless-bordered': frame = getFramelessBordered(l, t, w, h, cr, tone); break;
 		case 'iphone-notch':

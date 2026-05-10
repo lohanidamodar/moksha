@@ -12,6 +12,7 @@
 
 	function selectLayout(id) {
 		editor.layout = id;
+		editor.commit();
 	}
 
 	function duplicateCurrent() {
@@ -224,7 +225,7 @@
 
 	.tiny-btn.delete:hover {
 		background: rgba(239, 68, 68, 0.15);
-		color: #ef4444;
+		color: var(--danger, #ef4444);
 	}
 
 	.rename-input {
