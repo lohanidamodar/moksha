@@ -6,6 +6,7 @@
 import JSZip from 'jszip';
 import pkg from 'file-saver';
 const { saveAs } = pkg;
+import jsPDF from 'jspdf';
 import { getAssetType } from '$lib/assets/index.js';
 import { APP_NAME, APP_VERSION } from '$lib/config.js';
 import { transformKey } from '$lib/stores/editor.svelte.js';
@@ -207,6 +208,96 @@ export async function exportZip(queueItems, onProgress) {
 
 	const content = await zip.generateAsync({ type: 'blob' });
 	saveAs(content, `${APP_NAME.toLowerCase()}-assets.zip`);
+}
+
+/**
+ * Render a queue item at a specific size and return a {canvas, dataUrl}.
+ * Used by PDF export to embed images. Kept separate from renderToBlob so we
+ * can hand the canvas directly to jsPDF.addImage at full resolution.
+ */
+async function renderToCanvas(queueItem, size) {
+	const module = getAssetType(queueItem.assetType);
+	if (!module) throw new Error(`Unknown asset type: ${queueItem.assetType}`);
+
+	const canvas = document.createElement('canvas');
+	canvas.width = size.w;
+	canvas.height = size.h;
+	const ctx = canvas.getContext('2d');
+
+	const sizeTransforms =
+		queueItem.layoutTransforms?.[transformKey(queueItem.layout, size.id)] ??
+		queueItem.transforms ??
+		DEFAULT_TRANSFORM;
+	const resolved = resolveLayout(queueItem.layout, sizeTransforms);
+
+	module.render(
+		ctx,
+		{
+			layout: resolved.baseLayout,
+			background: queueItem.background,
+			pattern: queueItem.pattern,
+			phoneFrame: queueItem.phoneFrame,
+			transforms: resolved.transforms,
+			images: queueItem.images,
+			textOverlays: queueItem.textOverlays
+		},
+		size.w,
+		size.h
+	);
+
+	return canvas;
+}
+
+/**
+ * Render the queue as a single multi-page PDF and trigger a download.
+ *
+ * Each (queueItem, size) pair becomes one PDF page sized to the asset's
+ * pixel dimensions (1px = 1pt). Pages keep their native resolution so the
+ * resulting PDF is a faithful, printable copy of every asset.
+ *
+ * @param {object[]} queueItems
+ * @param {function} [onProgress]
+ */
+export async function exportPdf(queueItems, onProgress) {
+	const jobs = [];
+	for (const item of queueItems) {
+		const module = getAssetType(item.assetType);
+		if (!module) continue;
+		for (const size of module.sizes) {
+			jobs.push({ item, size });
+		}
+	}
+	if (jobs.length === 0) return;
+
+	const total = jobs.length;
+	let pdf;
+
+	for (let i = 0; i < jobs.length; i++) {
+		const { item, size } = jobs[i];
+		if (onProgress) onProgress(i + 1, total, `Rendering ${item.assetType} ${size.label}`);
+
+		const canvas = await renderToCanvas(item, size);
+		const dataUrl = canvas.toDataURL('image/png');
+
+		const orientation = size.w >= size.h ? 'landscape' : 'portrait';
+		// jsPDF expects [width, height] in the chosen unit (here px).
+		const format = [size.w, size.h];
+
+		if (i === 0) {
+			pdf = new jsPDF({ orientation, unit: 'px', format, hotfixes: ['px_scaling'] });
+		} else {
+			pdf.addPage(format, orientation);
+		}
+		pdf.addImage(dataUrl, 'PNG', 0, 0, size.w, size.h, undefined, 'FAST');
+	}
+
+	if (onProgress) onProgress(total, total, 'Compressing PDF...');
+	pdf.setProperties({
+		title: `${APP_NAME} assets`,
+		creator: APP_NAME,
+		producer: `${APP_NAME} ${APP_VERSION}`
+	});
+	pdf.save(`${APP_NAME.toLowerCase()}-assets.pdf`);
 }
 
 /**

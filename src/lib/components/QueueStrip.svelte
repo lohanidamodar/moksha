@@ -2,7 +2,7 @@
 	import { editor } from '$lib/stores/editor.svelte.js';
 	import { queue } from '$lib/stores/queue.svelte.js';
 	import { getAssetType } from '$lib/assets/index.js';
-	import { exportZip, downloadIndividual } from '$lib/renderer/export.js';
+	import { exportZip, exportPdf, downloadIndividual } from '$lib/renderer/export.js';
 
 	let exporting = $state(false);
 	let exportProgress = $state('');
@@ -20,21 +20,25 @@
 		editor.loadFromQueue(item);
 	}
 
-	async function handleExportZip() {
+	async function runExport(fn, label) {
 		if (queue.count === 0 || exporting) return;
 		exporting = true;
 		exportProgress = 'Starting...';
 		try {
-			await exportZip(queue.items, (current, total, label) => {
-				exportProgress = `${current}/${total}: ${label}`;
+			await fn(queue.items, (current, total, msg) => {
+				exportProgress = `${current}/${total}: ${msg}`;
 			});
 		} catch (err) {
-			console.error('Export failed:', err);
+			console.error(`${label} export failed:`, err);
+			exportProgress = 'Export failed';
 		} finally {
 			exporting = false;
-			exportProgress = '';
+			setTimeout(() => { if (!exporting) exportProgress = ''; }, 1500);
 		}
 	}
+
+	function handleExportZip() { return runExport(exportZip, 'ZIP'); }
+	function handleExportPdf() { return runExport(exportPdf, 'PDF'); }
 </script>
 
 <div class="queue-strip">
@@ -46,6 +50,10 @@
 					<span class="export-progress">{exportProgress}</span>
 				{/if}
 				<button class="strip-btn" onclick={() => queue.clear()}>Clear</button>
+				<button class="strip-btn" onclick={handleExportPdf} disabled={exporting} title="Export queue as multi-page PDF">
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+					PDF
+				</button>
 				<button class="strip-btn primary" onclick={handleExportZip} disabled={exporting}>
 					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 					ZIP
