@@ -171,7 +171,7 @@ class EditorState {
 
 	#snapshot() {
 		const out = {};
-		for (const k of HISTORY_FIELDS) out[k] = structuredClone(this[k]);
+		for (const k of HISTORY_FIELDS) out[k] = $state.snapshot(this[k]);
 		return out;
 	}
 
