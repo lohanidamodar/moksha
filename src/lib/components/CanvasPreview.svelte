@@ -3,6 +3,7 @@
 	import { getAssetType } from '$lib/assets/index.js';
 	import { resolveLayout } from '$lib/layoutResolver.js';
 	import { measureOverlay, hitTestOverlay } from '$lib/renderer/text-overlays.js';
+	import { getBackgroundTone } from '$lib/renderer/backgrounds.js';
 	import { tick } from 'svelte';
 
 	let canvas = $state(null);
@@ -52,9 +53,14 @@
 	let scaleX = $derived((displaySize.w * zoom) / renderSize.w);
 	let scaleY = $derived((displaySize.h * zoom) / renderSize.h);
 
-	// Build the resolved render config once per state change
+	// Build the resolved render config once per state change. While inline-editing an
+	// overlay we hide it on the canvas so only the textarea is visible — otherwise the
+	// rendered text and the editor stack and look like two copies.
 	let renderConfig = $derived.by(() => {
 		const resolved = resolveLayout(editor.layout, editor.getTransforms(editor.layout));
+		const overlays = editor.textOverlays
+			.filter((o) => o.id !== editingOverlayId)
+			.map((o) => ({ ...o }));
 		return {
 			layout: resolved.baseLayout,
 			background: editor.background,
@@ -62,7 +68,7 @@
 			phoneFrame: editor.phoneFrame,
 			transforms: resolved.transforms,
 			images: { ...editor.images },
-			textOverlays: editor.textOverlays.map((o) => ({ ...o }))
+			textOverlays: overlays
 		};
 	});
 
@@ -438,6 +444,9 @@
 		const ctx = canvas.getContext('2d');
 		const box = measureOverlay(ctx, editingOverlay, renderSize.w, renderSize.h);
 		const pad = 4;
+		const tone = getBackgroundTone(editor.background);
+		const autoColor = tone === 'light' ? '#1a1a1f' : '#ffffff';
+		const shadowColor = tone === 'light' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.4)';
 		return {
 			x: box.x * scaleX - pad,
 			y: box.y * scaleY - pad,
@@ -450,7 +459,11 @@
 			lineHeight: box.lineHeight * scaleY,
 			align: box.align,
 			weight: editingOverlay.weight ?? 700,
-			font: editingOverlay.font ?? 'Inter'
+			font: editingOverlay.font ?? 'Inter',
+			color: editingOverlay.color || autoColor,
+			shadow: editingOverlay.shadow !== false
+				? `0 3px 16px ${shadowColor}`
+				: 'none'
 		};
 	});
 </script>
@@ -518,7 +531,7 @@
 				oninput={(e) => editor.updateOverlay(editingOverlay.id, { text: e.target.value })}
 				onblur={commitInlineEdit}
 				onkeydown={(e) => handleInlineKeyDown(e, editingOriginalText, editingOverlay.id)}
-				style="left: {editingBox.x}px; top: {editingBox.y}px; min-width: {editingBox.w}px; min-height: {editingBox.h}px; transform: rotate({editingBox.rotation}deg); transform-origin: {editingBox.anchorX - editingBox.x}px {editingBox.anchorY - editingBox.y}px; font: {editingBox.weight} {editingBox.fontPx}px '{editingBox.font}', sans-serif; line-height: {editingBox.lineHeight}px; text-align: {editingBox.align};"
+				style="left: {editingBox.x}px; top: {editingBox.y}px; min-width: {editingBox.w}px; min-height: {editingBox.h}px; transform: rotate({editingBox.rotation}deg); transform-origin: {editingBox.anchorX - editingBox.x}px {editingBox.anchorY - editingBox.y}px; font: {editingBox.weight} {editingBox.fontPx}px '{editingBox.font}', sans-serif; line-height: {editingBox.lineHeight}px; text-align: {editingBox.align}; color: {editingBox.color}; text-shadow: {editingBox.shadow};"
 			></textarea>
 		{/if}
 	</div>
@@ -640,8 +653,7 @@
 
 	.inline-editor {
 		position: absolute;
-		background: rgba(0, 0, 0, 0.5);
-		color: #fff;
+		background: transparent;
 		border: 1.5px dashed var(--accent, #f97316);
 		border-radius: 4px;
 		outline: none;
@@ -652,6 +664,7 @@
 		font-family: inherit;
 		caret-color: var(--accent, #f97316);
 		box-sizing: border-box;
+		white-space: pre;
 	}
 
 	.size-badge {
