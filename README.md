@@ -11,6 +11,74 @@ npm install
 npm run dev
 ```
 
+The editor works out of the box with no backend — you can design and queue up assets and export a ZIP locally. To save **projects**, **uploaded screenshots/logos**, and **queued designs** across sessions, point Moksha at an Appwrite backend (see below).
+
+## Appwrite (auth + project storage)
+
+Moksha uses [Appwrite](https://appwrite.io) for accounts, project storage, image uploads, and saved designs. The project id defaults to `moksha`; everything else is overridable via env vars.
+
+### Environment variables
+
+Copy `.env.example` to `.env` and override what you need:
+
+```sh
+VITE_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+VITE_APPWRITE_PROJECT_ID=moksha
+
+VITE_APPWRITE_DATABASE_ID=moksha
+VITE_APPWRITE_PROJECTS_COLLECTION=projects
+VITE_APPWRITE_ASSETS_COLLECTION=assets
+VITE_APPWRITE_DESIGNS_COLLECTION=designs
+
+VITE_APPWRITE_BUCKET_ID=moksha-assets
+```
+
+These vars must be `VITE_`-prefixed so they're exposed to the browser. When deploying via **Appwrite Sites**, set them in the site's environment configuration.
+
+### Required Appwrite resources
+
+In your Appwrite project (id: `moksha` by default), provision:
+
+**Auth** — Enable the **Email/Password** provider. Add your site's URL (e.g. `https://your-site.appwrite.network`) to the project's allowed Web platforms.
+
+**Database** `moksha` with three collections:
+
+`projects`
+- `name` — string, required
+- `description` — string, optional
+- `ownerId` — string, required (indexed)
+
+`assets`
+- `projectId` — string, required (indexed)
+- `ownerId` — string, required (indexed)
+- `category` — string, required (`screenshot` | `logo` | `icon`)
+- `fileId` — string, required
+- `name` — string
+- `mimeType` — string
+
+`designs`
+- `projectId` — string, required (indexed)
+- `ownerId` — string, required (indexed)
+- `assetType` — string, required
+- `sizeId` — string, optional
+- `layout` — string, required
+- `config` — string (JSON blob, up to ~1 MB depending on overlay/transform count)
+- `thumbnail` — string (base64 data URL, optional)
+
+Set the document security on each collection to **document-level permissions**. Moksha attaches read/update/delete permissions for `Role.user(<ownerId>)` to every doc it creates.
+
+**Storage** — Bucket `moksha-assets`. Allow image MIME types (PNG, JPEG, WebP, SVG). Document-level permissions (Moksha attaches per-user permissions on each upload).
+
+### Deploying to Appwrite Sites
+
+Moksha is a SvelteKit app using `@sveltejs/adapter-node`, which runs as a Node service on Appwrite Sites:
+
+1. Push this repo to a git host connected to Appwrite Sites.
+2. Create a new Site in your Appwrite project.
+3. Build command: `npm run build`. Output / install: defaults are fine.
+4. Set the `VITE_APPWRITE_*` env vars listed above on the site.
+5. Deploy. The site exposes both the editor at `/` and the rendering API at `/api/render*`.
+
 ## Asset Types
 
 Moksha splits screenshot mockups by device family — each has its own frame defaults and size variants:

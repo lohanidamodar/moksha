@@ -1,6 +1,7 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
 	import { queue } from '$lib/stores/queue.svelte.js';
+	import { imageLibrary } from '$lib/stores/imageLibrary.svelte.js';
 	import { getAssetType } from '$lib/assets/index.js';
 	import LayoutPicker from './LayoutPicker.svelte';
 	import BackgroundPicker from './BackgroundPicker.svelte';
@@ -56,6 +57,16 @@
 		}
 	}
 
+	function buildImageRefs() {
+		const refs = {};
+		for (const [key, img] of Object.entries(editor.images)) {
+			if (!img) continue;
+			const id = imageLibrary.getIdByImg(img);
+			if (id) refs[key] = id;
+		}
+		return refs;
+	}
+
 	function handleAddToQueue() {
 		const thumbnail = generateThumbnail?.() ?? null;
 
@@ -68,6 +79,7 @@
 			phoneFrame: editor.phoneFrame,
 			layoutTransforms: deepCopy(editor.layoutTransforms),
 			images: { ...editor.images },
+			imageRefs: buildImageRefs(),
 			textOverlays: deepCopy(editor.textOverlays),
 			thumbnail
 		};

@@ -132,7 +132,7 @@ class EditorState {
 		} else {
 			this.layoutTransforms = {};
 		}
-		this.images = { ...item.images };
+		this.images = { ...(item.images ?? {}) };
 		this.textOverlays = item.textOverlays ? structuredClone(item.textOverlays) : [];
 		this.selectedOverlayId = null;
 		this.editingQueueId = item.id;
