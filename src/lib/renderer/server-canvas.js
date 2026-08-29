@@ -4,6 +4,8 @@
  */
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { getAssetType } from '$lib/assets/index.js';
+import { canvasToStorePng } from './png.js';
+import { validateStoreAsset, readPngHeader } from './validate.js';
 
 // Track registered fonts
 const registeredFonts = new Set();
@@ -20,19 +22,36 @@ export async function registerFont(family) {
 		const encoded = family.replace(/ /g, '+');
 		const cssUrl = `https://fonts.googleapis.com/css2?family=${encoded}:wght@400;500;600;700;800;900&display=swap`;
 
-		// Fetch the CSS to get the font file URL
 		const cssRes = await fetch(cssUrl, {
 			headers: { 'User-Agent': 'Mozilla/5.0' } // Google Fonts requires a browser UA
 		});
 		const css = await cssRes.text();
 
-		// Extract woff2 URLs from the CSS
-		const urlMatches = css.matchAll(/url\((https:\/\/fonts\.gstatic\.com[^)]+\.woff2)\)/g);
-		for (const match of urlMatches) {
-			const fontRes = await fetch(match[1]);
+		// Google serves woff2 to browsers it recognises and ttf otherwise, and
+		// which one you get depends on the User-Agent above. Matching only
+		// woff2 meant scripts like Devanagari registered nothing at all and
+		// rendered as boxes.
+		const urls = [...css.matchAll(/url\((https:\/\/fonts\.gstatic\.com[^)]+\.(?:woff2|ttf|otf))\)/g)].map(
+			(m) => m[1]
+		);
+
+		// Every face, not just the first. A family is split across unicode-range
+		// subsets, and the first is usually Latin — so registering one face
+		// gives a font that renders English and nothing else.
+		for (const url of urls) {
+			const fontRes = await fetch(url);
 			const buffer = Buffer.from(await fontRes.arrayBuffer());
 			GlobalFonts.register(buffer, family);
-			break; // Register the first variant (usually latin regular/bold range)
+		}
+
+		// Verify rather than assume. A family that failed to register does not
+		// throw — it silently falls back, and the only symptom is boxes in the
+		// finished asset, which no exit code would catch.
+		if (!GlobalFonts.has(family)) {
+			console.warn(
+				`Font "${family}" did not register (${urls.length} face(s) tried); ` +
+					'text in this family will fall back and may render as boxes.'
+			);
 		}
 	} catch (e) {
 		console.warn(`Failed to register font "${family}":`, e.message);
@@ -87,7 +106,9 @@ export async function renderAsset(config, imageBuffers = {}) {
 		images
 	}, size.w, size.h);
 
-	return canvas.toBuffer('image/png');
+	// Not canvas.toBuffer('image/png'): that is always RGBA, and both stores
+	// refuse an alpha channel. This re-encodes losslessly as 24-bit.
+	return canvasToStorePng(canvas);
 }
 
 /**
@@ -108,9 +129,23 @@ export async function renderBatch(configs, imageBuffers = {}) {
 		const buffer = await renderAsset(config, images);
 		const module = getAssetType(config.assetType);
 		const sizeId = config.sizeId || module?.sizes[0]?.id || 'default';
+
+		// Checked against what was actually produced, not against what the
+		// config asked for, so an encoder change cannot quietly break it.
+		const header = readPngHeader(buffer);
+		const problems = header
+			? validateStoreAsset({
+					width: header.width,
+					height: header.height,
+					platform: module?.platform ?? 'android',
+					hasAlpha: header.hasAlpha
+				})
+			: [{ level: 'error', message: 'Rendered output is not a readable PNG.' }];
+
 		results.push({
 			filename: `${config.assetType}-${config.layout || 'default'}-${sizeId}-${i + 1}.png`,
-			buffer
+			buffer,
+			problems
 		});
 	}
 	return results;

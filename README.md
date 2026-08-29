@@ -125,6 +125,34 @@ Use `imageRefs` to map config image inputs (e.g. `screenshot`, `logo`, `icon`) t
 |---|---|---|
 | `assetType` | string (required) | One of: `iphone-screenshot`, `ipad-screenshot`, `android-phone-screenshot`, `android-tablet-screenshot`, `feature-graphic`, `promo-banner`, `app-icon-showcase`, `social-card` |
 | `sizeId` | string | Size variant. Defaults to first size of the asset type. |
+
+## Headless rendering (CLI)
+
+The HTTP API needs a running server. For CI jobs and coding agents there is a
+command that uses the same renderer:
+
+```sh
+npm run render -- --schema                                   # every valid option, as JSON
+npm run render -- --job job.json --images ./caps --out ./out
+```
+
+`job.json` is `{ "assets": [ ...configs ] }`, where each config is the same
+shape the API takes plus `screenshot` (a filename under `--images`) and an
+optional `filename` for the output.
+
+## Store rules are checked, not assumed
+
+Every rendered asset is validated against the store it targets, and the CLI
+exits non-zero if any fails. These are the rejections that produce a perfectly
+valid image file:
+
+- **No alpha channel.** Play wants "JPEG or 24-bit PNG (no alpha)" and Apple
+  rejects transparency. `@napi-rs/canvas` only encodes RGBA, so output is
+  re-encoded losslessly as 24-bit PNG.
+- **Play aspect ratio.** The long side may be at most twice the short side, so
+  a raw 1080x2400 phone capture is refused at its own native resolution.
+- **Apple dimensions.** Must match a size App Store Connect accepts.
+
 | `layout` | string | Layout id. Defaults to first layout. |
 | `background` | object | `{ type: "gradient" \| "mesh" \| "solid", id: "preset-id" }`. For a custom color, use `{ type: "solid", id: "custom", color: "#hex" }`. |
 | `pattern` | object \| null | Optional texture overlay drawn on top of the background: `{ id: "dots" }`. Pass `null` for no pattern. Optional `color` and `opacity` overrides. |

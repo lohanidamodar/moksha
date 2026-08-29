@@ -7,14 +7,16 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"prepare": "svelte-kit sync || echo ''"
+		"prepare": "svelte-kit sync || echo ''",
+		"render": "vite-node scripts/render-cli.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",
 		"@sveltejs/kit": "^2.57.0",
 		"@sveltejs/vite-plugin-svelte": "^7.0.0",
 		"svelte": "^5.55.2",
-		"vite": "^8.0.7"
+		"vite": "^8.0.7",
+		"vite-node": "^6.0.0"
 	},
 	"dependencies": {
 		"@napi-rs/canvas": "^0.1.97",
