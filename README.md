@@ -1,24 +1,126 @@
 # Moksha
 
-App store asset generator. Create screenshot mockups, feature graphics, promo banners, app icon showcases, and social cards for iOS and Android.
+Store assets for a mobile app: screenshot mockups, feature graphics, promo
+banners, app-icon showcases and social cards, for the App Store and Google Play.
 
-Built with SvelteKit + Svelte 5.
+A listing is a set of assets that share a look and a voice, so Moksha keeps it
+in a file — `moksha/moksha.json`, in the app's own repo. That file is diffable,
+versioned with the app it advertises, and re-runnable, so next release's
+screenshots are one command rather than an afternoon. The studio is a visual
+editor for the same file.
 
-## Setup
+Every asset is checked against the rules of the store it targets before you
+find out from a rejection.
+
+## Quick start
+
+From the app's repo:
 
 ```sh
-npm install
-npm run dev
+npx moksha init "My App"     # writes moksha/moksha.json
+npx moksha studio            # design it in the browser
+npx moksha render            # every asset, every locale, verified
 ```
+
+`render` writes to `moksha/out/`, grouped the way an upload expects, so a folder
+goes straight into App Store Connect or the Play Console:
+
+```
+moksha/out/
+├── en/
+│   ├── ios/screenshots/phone/home.png
+│   ├── android/screenshots/phone/home.png
+│   └── android/feature-graphic/feature.png
+└── ne/
+    └── ...
+```
+
+Add `moksha/out/` to the app's `.gitignore`; commit `moksha/moksha.json` and the
+captures it references.
+
+## Commands
+
+| Command | Does |
+|---|---|
+| `moksha init [name]` | Write `moksha/moksha.json` for this app |
+| `moksha doctor` | Check the project, the toolchain and the font cache |
+| `moksha validate` | Check the project against the store rules, without rendering |
+| `moksha render` | Render every asset, for every locale, and verify it |
+| `moksha studio` | Open the editor on this project (`--port`, `--no-open`) |
+| `moksha schema` | Every legal option, as JSON |
+
+Options: `--project <path>` (default: `moksha/moksha.json`, searched upwards from
+the working directory, so the commands work anywhere inside the repo),
+`--locale <code>`, `--asset <id>` (repeatable), `--out <dir>`.
+
+`render` exits non-zero when anything breaks a store rule, so a release pipeline
+fails there rather than at upload.
+
+## The project file
+
+```jsonc
+{
+  "version": 1,
+  "app": { "name": "My App" },
+  "locales": ["en", "ne"],
+  "out": "out",
+
+  // Defaults every asset inherits.
+  "design": {
+    "background": { "type": "mesh", "id": "aurora" },
+    "pattern": { "id": "dots" },
+    // One family per locale: Montserrat has no Devanagari at all, so a Nepali
+    // listing needs a different typeface, not different words in the same one.
+    "font": { "en": "Montserrat", "ne": "Noto Sans Devanagari" },
+    // Per asset type, when the type's own default is not what you want.
+    "frames": { "android-phone-screenshot": "pixel-black" }
+  },
+
+  "assets": [
+    {
+      "id": "home",                       // names the output file
+      "assetType": "iphone-screenshot",
+      "layout": "tilt-right",
+      "images": { "screenshot": "captures/ios/home.png" },
+      "text": [
+        {
+          "text": { "en": "Everything in one place", "ne": "..." },
+          "anchor": "top-left",
+          "fontSize": 0.07,
+          "weight": 800
+        }
+      ]
+    },
+    {
+      "id": "feature",
+      "assetType": "feature-graphic",
+      "layout": "logo-center",
+      "images": { "logo": "captures/logo.png" },
+      "pattern": null,                    // null means none, not "inherit"
+      "background": { "type": "solid", "id": "custom", "color": "#0f172a" },
+      "text": [{ "text": "My App", "anchor": "bottom-center", "fontSize": 0.1 }]
+    }
+  ]
+}
+```
+
+Every path is relative to the project file, so a project moves with the repo.
+Any text field takes either one string or a record of one string per locale; a
+record missing a locale is an error, not a blank headline.
+
+Precedence for every visual choice: the asset's own value, then `design`, then
+the asset type's default. `moksha schema` prints every legal value, and a
+complete example, without needing the studio running.
 
 ## Asset Types
 
-Moksha splits screenshot mockups by device family — each has its own frame defaults and size variants:
+Screenshot mockups are split by device family — each has its own frame defaults
+and size variants:
 
 | Asset Type | Sizes | Default Frame |
 |---|---|---|
-| `iphone-screenshot` | iPhone 6.7", 6.5", 6.1", 5.5" | iPhone Dynamic Island |
-| `ipad-screenshot` | iPad Pro 12.9", iPad 10.5" | iPad |
+| `iphone-screenshot` | iPhone 6.9", 6.7", 6.5", 6.1", 5.5" | iPhone Dynamic Island |
+| `ipad-screenshot` | iPad 13", iPad Pro 12.9", iPad 10.5" | iPad |
 | `android-phone-screenshot` | Android Phone 1080x1920 | Android Punch Hole |
 | `android-tablet-screenshot` | Android 7" (1200x1920), 10" (1600x2560) | Android Clean |
 | `feature-graphic` | Play Store 1024x500 | n/a |
@@ -26,140 +128,107 @@ Moksha splits screenshot mockups by device family — each has its own frame def
 | `app-icon-showcase` | 1024x1024, 512x512 | n/a |
 | `social-card` | OG (1200x630), Twitter (1200x675), Instagram (1080x1080) | optional phone frame |
 
-If you want screenshots for both iPhone and Android, create one mockup of each asset type — they don't share state.
-
-## API
-
-Moksha exposes a server-side rendering API for programmatic asset generation.
-
-### `GET /api/render`
-
-Returns the full API schema — all asset types, sizes, layouts, backgrounds, phone frames, fonts, and examples.
-
-```sh
-curl http://localhost:5173/api/render | jq .
-```
-
-### `POST /api/render`
-
-Render a single asset. Returns a PNG image.
-
-**JSON body (no images):**
-
-```sh
-curl -X POST http://localhost:5173/api/render \
-  -H "Content-Type: application/json" \
-  -d '{
-    "assetType": "iphone-screenshot",
-    "layout": "tilt-right",
-    "background": { "type": "gradient", "id": "sunset-pink" },
-    "phoneFrame": "iphone-dynamic-island",
-    "textOverlays": [
-      { "text": "My App", "anchor": "top-left", "fontSize": 0.07, "weight": 800 },
-      { "text": "Best app ever", "anchor": "top-left", "offsetY": 0.08, "fontSize": 0.04 }
-    ]
-  }' \
-  --output mockup.png
-```
-
-**Multipart form (with images):**
-
-```sh
-curl -X POST http://localhost:5173/api/render \
-  -F 'config={
-    "assetType": "android-phone-screenshot",
-    "sizeId": "android-phone",
-    "layout": "hero-center",
-    "background": { "type": "pattern", "id": "dots" },
-    "phoneFrame": "android-punch-hole",
-    "textOverlays": [
-      { "text": "Amazing App", "anchor": "top-center", "font": "Bebas Neue", "fontSize": 0.08 },
-      { "text": "Download now", "anchor": "bottom-center", "font": "Lato", "fontSize": 0.04 }
-    ]
-  }' \
-  -F screenshot=@screenshot.png \
-  --output mockup.png
-```
-
-### `POST /api/render/batch`
-
-Render multiple assets. Returns a ZIP file with all images and a `manifest.json`.
-
-```sh
-curl -X POST http://localhost:5173/api/render/batch \
-  -F 'configs=[
-    {
-      "assetType": "iphone-screenshot",
-      "layout": "tilt-right",
-      "background": { "type": "gradient", "id": "sunset-pink" },
-      "textOverlays": [{ "text": "Screen 1", "anchor": "top-left", "fontSize": 0.07, "weight": 800 }],
-      "imageRefs": { "screenshot": "iphone-shot" }
-    },
-    {
-      "assetType": "android-phone-screenshot",
-      "layout": "tilt-right",
-      "phoneFrame": "android-punch-hole",
-      "background": { "type": "gradient", "id": "sunset-pink" },
-      "textOverlays": [{ "text": "Screen 1", "anchor": "top-left", "fontSize": 0.07, "weight": 800 }],
-      "imageRefs": { "screenshot": "android-shot" }
-    },
-    {
-      "assetType": "feature-graphic",
-      "layout": "logo-center",
-      "background": { "type": "gradient", "id": "emerald" },
-      "textOverlays": [{ "text": "My App", "anchor": "bottom-center", "fontSize": 0.1, "weight": 800 }],
-      "imageRefs": { "logo": "applogo" }
-    }
-  ]' \
-  -F iphone-shot=@iphone-screenshot.png \
-  -F android-shot=@android-screenshot.png \
-  -F applogo=@logo.png \
-  --output assets.zip
-```
-
-Use `imageRefs` to map config image inputs (e.g. `screenshot`, `logo`, `icon`) to uploaded form field names. This lets each config in the batch use a different uploaded image. If `imageRefs` is omitted, defaults to field names `screenshot`, `logo`, `icon`.
-
-### Config Reference
-
-| Field | Type | Description |
-|---|---|---|
-| `assetType` | string (required) | One of: `iphone-screenshot`, `ipad-screenshot`, `android-phone-screenshot`, `android-tablet-screenshot`, `feature-graphic`, `promo-banner`, `app-icon-showcase`, `social-card` |
-| `sizeId` | string | Size variant. Defaults to first size of the asset type. |
-
-## Headless rendering (CLI)
-
-The HTTP API needs a running server. For CI jobs and coding agents there is a
-command that uses the same renderer:
-
-```sh
-npm run render -- --schema                                   # every valid option, as JSON
-npm run render -- --job job.json --images ./caps --out ./out
-```
-
-`job.json` is `{ "assets": [ ...configs ] }`, where each config is the same
-shape the API takes plus `screenshot` (a filename under `--images`) and an
-optional `filename` for the output.
-
 ## Store rules are checked, not assumed
 
-Every rendered asset is validated against the store it targets, and the CLI
-exits non-zero if any fails. These are the rejections that produce a perfectly
-valid image file:
+Every rendered asset is validated against the store it targets, and `render`
+exits non-zero if any fails. These are the failures that produce a perfectly
+valid image file a store then refuses — or one nobody notices is broken:
 
 - **No alpha channel.** Play wants "JPEG or 24-bit PNG (no alpha)" and Apple
-  rejects transparency. `@napi-rs/canvas` only encodes RGBA, so output is
-  re-encoded losslessly as 24-bit PNG.
-- **Play aspect ratio.** The long side may be at most twice the short side, so
-  a raw 1080x2400 phone capture is refused at its own native resolution.
+  rejects transparency. Neither canvas can encode without one, so output is
+  re-encoded losslessly as 24-bit PNG — in the browser as well as on the server.
+- **Play aspect ratio.** The long side may be at most twice the short side, so a
+  raw 1080x2400 phone capture is refused at its own native resolution. Framing
+  it is what makes it uploadable.
 - **Apple dimensions.** Must match a size App Store Connect accepts.
+- **Feature graphics and icons** are measured as what they are: a 1024x500
+  feature graphic is 2.05:1 and correct, and is not held to the screenshot
+  aspect limit.
+- **Fonts that render as boxes.** A family that fails to register does not
+  throw, and a family that registers may still have no glyphs for the script —
+  Montserrat draws Nepali as a row of identical boxes. Both are reported
+  against the asset they affect.
 
-| `layout` | string | Layout id. Defaults to first layout. |
-| `background` | object | `{ type: "gradient" \| "mesh" \| "solid", id: "preset-id" }`. For a custom color, use `{ type: "solid", id: "custom", color: "#hex" }`. |
-| `pattern` | object \| null | Optional texture overlay drawn on top of the background: `{ id: "dots" }`. Pass `null` for no pattern. Optional `color` and `opacity` overrides. |
-| `phoneFrame` | string | See **Phone Frames** below. Each screenshot asset type has its own default and allowed frames. |
-| `transforms` | object | `{ phone: { x, y, scale, rotation }, logo: { x, y, scale, rotation } }` — position/size/rotation tweaks |
-| `textOverlays` | array | Free-form text drawn on top of any asset. See **Text Overlays** below. |
-| `imageRefs` | object | Batch only. Maps input ids to uploaded form field names: `{ "screenshot": "myfield" }` |
+Fonts are cached under the user's cache directory after first use
+(`MOKSHA_FONT_CACHE` to move it), so renders work offline and reproducibly.
+
+### Layouts
+
+All four screenshot asset types share the same 10 layouts: `tilt-right`, `left-title`, `float-up`, `tilt-left`, `right-title`, `bottom-emerge`, `perspective`, `hero-center`, `split-left`, `split-right`.
+
+`split-left` + `split-right` are designed as a side-by-side pair — when placed next to each other in your store listing they form one continuous phone visual.
+
+### Phone Frames
+
+21 frame styles across iOS, Android, and universal:
+
+**iPhone (6):** `iphone-dynamic-island`, `iphone-dynamic-island-white`, `iphone-dynamic-island-natural`, `iphone-dynamic-island-gold`, `iphone-notch`, `iphone-notch-white`
+
+**iPad (3):** `ipad` (Space Gray), `ipad-silver`, `ipad-gold`
+
+**Android (10):**
+- Pixel: `pixel` (Cream), `pixel-black` (Obsidian), `pixel-white` (Porcelain) — with horizontal camera bar
+- Galaxy: `galaxy` (Titanium), `galaxy-black` (Phantom Black), `galaxy-white` (Phantom White) — centered punch hole
+- Other: `oneplus` (corner punch hole), `android-waterdrop` (teardrop notch), `android-punch-hole`, `android-clean`
+
+**Universal (2):** `frameless` (no body, soft shadow only), `frameless-bordered` (no body + thin auto-contrast outline)
+
+#### Allowed Per Asset Type
+
+| Asset Type | Allowed Frames |
+|---|---|
+| iphone-screenshot | All iPhone variants + frameless / frameless-bordered |
+| ipad-screenshot | All iPad variants + frameless / frameless-bordered |
+| android-phone-screenshot | Pixel/Galaxy color variants, OnePlus, Waterdrop, Punch Hole, Clean + frameless / frameless-bordered |
+| android-tablet-screenshot | Galaxy color variants, Punch Hole, Clean + frameless / frameless-bordered |
+| promo-banner, social-card | any (only used when a screenshot is provided) |
+
+The API accepts any `phoneFrame` value, but for best results pick from the asset type's `allowedPhoneFrames` returned by `GET /api/render`.
+
+### Image Fields
+
+| Field | Used by |
+|---|---|
+| `screenshot` | the four screenshot types, promo-banner, social-card |
+| `logo` | feature-graphic, promo-banner, social-card |
+| `icon` | app-icon-showcase |
+
+### Backgrounds and Patterns
+
+Background and pattern are independent layers — pick any pattern over any background.
+
+#### Gradients (19) — `{ "type": "gradient", "id": "..." }`
+
+**Vibrant:** `sunset-pink`, `blue-violet`, `emerald`, `hot-magenta`, `ocean`, `indigo-dream`, `amber`, `red-orange`
+
+**Sophisticated dark:** `dark-teal`, `midnight-blue`, `space-gray`, `deep-ocean`, `midnight-purple`, `forest-night`
+
+**Soft pastels (light):** `peachy`, `soft-pink`, `mint-cream`, `lavender-mist`, `morning-sun`
+
+#### Mesh Gradients (9) — `{ "type": "mesh", "id": "..." }`
+
+Multi-color radial blob gradients for a modern designer feel.
+
+**Dark:** `aurora`, `sunset-mesh`, `ocean-mesh`, `forest-mesh`, `rose-mesh`, `royal-mesh`
+
+**Light:** `pastel-mesh`, `cloud-mesh`, `sage-mesh`
+
+#### Solids (18 + custom) — `{ "type": "solid", "id": "..." }`
+
+**Dark:** `pure-black`, `dark-charcoal`, `navy`, `forest-green`, `deep-purple`, `crimson`, `slate`, `graphite`, `midnight-indigo`, `brand-blue`, `brand-purple`, `brand-orange`
+
+**Light:** `pure-white`, `cream`, `ivory`, `soft-gray`, `beige`, `warm-sand`
+
+**Custom:** `{ "type": "solid", "id": "custom", "color": "#7c3aed" }` — any hex color. Tone (light/dark) is auto-detected from luminance.
+
+#### Patterns (20) — `{ "id": "..." }` overlay on top of background
+
+**Tone-aware** (auto-pick light/dark overlay color based on background):
+`dots`, `soft-grid`, `grid`, `topography`, `diagonal-lines`, `vertical-lines` (pinstripes), `hex-grid`, `triangles`, `plus` (Apple-style plus marks), `stars`, `halftone`, `noise`, `circles`, `waves`, `crosshatch`, `geometric`
+
+**Decorative** (fixed colors, ignore background tone): `bokeh`, `aurora-streaks`, `confetti`, `memphis`
+
+You can override pattern color and opacity: `{ "id": "dots", "color": "#fff", "opacity": 0.12 }`.
 
 ### Text Overlays
 
@@ -199,93 +268,50 @@ curl -X POST http://localhost:5173/api/render \
   --output mockup.png
 ```
 
-### Phone Frames
-
-21 frame styles across iOS, Android, and universal:
-
-**iPhone (6):** `iphone-dynamic-island`, `iphone-dynamic-island-white`, `iphone-dynamic-island-natural`, `iphone-dynamic-island-gold`, `iphone-notch`, `iphone-notch-white`
-
-**iPad (3):** `ipad` (Space Gray), `ipad-silver`, `ipad-gold`
-
-**Android (10):**
-- Pixel: `pixel` (Cream), `pixel-black` (Obsidian), `pixel-white` (Porcelain) — with horizontal camera bar
-- Galaxy: `galaxy` (Titanium), `galaxy-black` (Phantom Black), `galaxy-white` (Phantom White) — centered punch hole
-- Other: `oneplus` (corner punch hole), `android-waterdrop` (teardrop notch), `android-punch-hole`, `android-clean`
-
-**Universal (2):** `frameless` (no body, soft shadow only), `frameless-bordered` (no body + thin auto-contrast outline)
-
-#### Allowed Per Asset Type
-
-| Asset Type | Allowed Frames |
-|---|---|
-| iphone-screenshot | All iPhone variants + frameless / frameless-bordered |
-| ipad-screenshot | All iPad variants + frameless / frameless-bordered |
-| android-phone-screenshot | Pixel/Galaxy color variants, OnePlus, Waterdrop, Punch Hole, Clean + frameless / frameless-bordered |
-| android-tablet-screenshot | Galaxy color variants, Punch Hole, Clean + frameless / frameless-bordered |
-| promo-banner, social-card | any (only used when a screenshot is provided) |
-
-The API accepts any `phoneFrame` value, but for best results pick from the asset type's `allowedPhoneFrames` returned by `GET /api/render`.
-
-### Image Fields (multipart)
-
-| Field | Used by |
-|---|---|
-| `screenshot` | iphone-screenshot, ipad-screenshot, android-phone-screenshot, android-tablet-screenshot, promo-banner, social-card |
-| `logo` | feature-graphic, promo-banner, social-card |
-| `icon` | app-icon-showcase |
-
-### Layouts
-
-All four screenshot asset types share the same 10 layouts: `tilt-right`, `left-title`, `float-up`, `tilt-left`, `right-title`, `bottom-emerge`, `perspective`, `hero-center`, `split-left`, `split-right`.
-
-`split-left` + `split-right` are designed as a side-by-side pair — when placed next to each other in your store listing they form one continuous phone visual.
-
-### Backgrounds and Patterns
-
-Background and pattern are independent layers — pick any pattern over any background.
-
-#### Gradients (19) — `{ "type": "gradient", "id": "..." }`
-
-**Vibrant:** `sunset-pink`, `blue-violet`, `emerald`, `hot-magenta`, `ocean`, `indigo-dream`, `amber`, `red-orange`
-
-**Sophisticated dark:** `dark-teal`, `midnight-blue`, `space-gray`, `deep-ocean`, `midnight-purple`, `forest-night`
-
-**Soft pastels (light):** `peachy`, `soft-pink`, `mint-cream`, `lavender-mist`, `morning-sun`
-
-#### Mesh Gradients (9) — `{ "type": "mesh", "id": "..." }`
-
-Multi-color radial blob gradients for a modern designer feel.
-
-**Dark:** `aurora`, `sunset-mesh`, `ocean-mesh`, `forest-mesh`, `rose-mesh`, `royal-mesh`
-
-**Light:** `pastel-mesh`, `cloud-mesh`, `sage-mesh`
-
-#### Solids (18 + custom) — `{ "type": "solid", "id": "..." }`
-
-**Dark:** `pure-black`, `dark-charcoal`, `navy`, `forest-green`, `deep-purple`, `crimson`, `slate`, `graphite`, `midnight-indigo`, `brand-blue`, `brand-purple`, `brand-orange`
-
-**Light:** `pure-white`, `cream`, `ivory`, `soft-gray`, `beige`, `warm-sand`
-
-**Custom:** `{ "type": "solid", "id": "custom", "color": "#7c3aed" }` — any hex color. Tone (light/dark) is auto-detected from luminance.
-
-#### Patterns (20) — `{ "id": "..." }` overlay on top of background
-
-**Tone-aware** (auto-pick light/dark overlay color based on background):
-`dots`, `soft-grid`, `grid`, `topography`, `diagonal-lines`, `vertical-lines` (pinstripes), `hex-grid`, `triangles`, `plus` (Apple-style plus marks), `stars`, `halftone`, `noise`, `circles`, `waves`, `crosshatch`, `geometric`
-
-**Decorative** (fixed colors, ignore background tone): `bokeh`, `aurora-streaks`, `confetti`, `memphis`
-
-You can override pattern color and opacity: `{ "id": "dots", "color": "#fff", "opacity": 0.12 }`.
-
 ### Fonts
 
-The renderer accepts any Google Font. Common picks: `Inter`, `Montserrat`, `Open Sans`, `Bebas Neue`, `Lato`, `Poppins`, `Playfair Display`. Set via `textOverlays[].font`.
+Any Google Font family name works. Common picks: `Inter`, `Montserrat`,
+`Open Sans`, `Bebas Neue`, `Lato`, `Poppins`, `Playfair Display`. For Devanagari
+use a family that covers it, such as `Noto Sans Devanagari`. Set it per project
+(`design.font`) or per overlay (`text[].font`), either as one name or one per
+locale.
 
-## Building
+## HTTP API
+
+The studio also exposes a rendering API, for a caller that would rather not
+write a project file. `GET /api/render` returns the full schema.
+
+`POST /api/render` renders one asset and returns a PNG; `POST /api/render/batch`
+renders many and returns a ZIP with a `manifest.json`. Both take the same config
+shape as a project asset, with images either uploaded as multipart fields
+(`screenshot`, `logo`, `icon`) or mapped per config with `imageRefs`.
 
 ```sh
-npm run build
-node build
+curl -X POST http://localhost:4321/api/render \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assetType": "iphone-screenshot",
+    "layout": "tilt-right",
+    "background": { "type": "gradient", "id": "sunset-pink" },
+    "phoneFrame": "iphone-dynamic-island",
+    "textOverlays": [{ "text": "My App", "anchor": "top-left", "fontSize": 0.07, "weight": 800 }]
+  }' \
+  --output mockup.png
 ```
 
-Runs on `http://localhost:3000` by default.
+The studio serves `/api/project` too: `GET` for the open project and every legal
+option, `PUT` to save it, and `POST /api/project/image` to add a capture.
+
+## Development
+
+Built with SvelteKit + Svelte 5. The renderer, asset types, store rules and PNG
+encoder are plain modules under `src/core/` with no SvelteKit and no bundler —
+the CLI imports them directly, and the studio reaches them through a `$core`
+alias, so the browser preview and the exported PNG cannot drift apart.
+
+```sh
+npm install
+npm run dev      # the studio, with MOKSHA_PROJECT pointing at a project
+npm test         # node's own test runner, no framework
+npm run build    # the studio, which `moksha studio` serves
+```

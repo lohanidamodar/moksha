@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # The font cache makes renders reproducible and keeps the suite off the
+      # network on reruns; a cold cache still passes, just slower.
+      - name: Cache fonts
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/moksha/fonts
+          key: moksha-fonts-${{ hashFiles('src/core/fonts.js') }}
+
+      - run: npm ci
+
+      - run: npm test
+
+      # The studio is part of the package, so a build failure is a release
+      # failure and belongs in CI rather than in a publish.
+      - run: npm run build
+
+      - name: Render the example project end to end
+        run: |
+          mkdir -p /tmp/ci-app
+          cd /tmp/ci-app
+          node "$GITHUB_WORKSPACE/src/cli.js" init "CI App"
+          node "$GITHUB_WORKSPACE/src/cli.js" doctor
+          node "$GITHUB_WORKSPACE/src/cli.js" schema > /dev/null

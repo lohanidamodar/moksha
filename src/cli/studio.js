@@ -35,7 +35,15 @@ export function studio({ flags }) {
 
 	const child = spawn(process.execPath, [entry], {
 		stdio: 'inherit',
-		env: { ...process.env, PORT: String(port), MOKSHA_PROJECT: projectPath }
+		env: {
+			...process.env,
+			PORT: String(port),
+			// adapter-node needs its own origin to accept the studio's uploads:
+			// SvelteKit refuses a form POST whose Origin it cannot match, and an
+			// image drag-and-drop is a form POST.
+			ORIGIN: url,
+			MOKSHA_PROJECT: projectPath
+		}
 	});
 
 	console.log(`studio  ${url}`);

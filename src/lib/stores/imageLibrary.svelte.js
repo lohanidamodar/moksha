@@ -23,10 +23,44 @@ class ImageLibraryState {
 		return results;
 	}
 
+	/**
+	 * Add an image the project already references, by URL.
+	 *
+	 * Reuses an entry already loaded from the same URL, so re-opening an asset
+	 * or switching locale does not pile up duplicates of the same capture.
+	 *
+	 * @param {string} url
+	 * @param {string} name
+	 * @param {string} category
+	 */
+	async addFromUrl(url, name, category) {
+		const existing = this.items.find((i) => i.src === url);
+		if (existing) return existing;
+
+		const entry = await new Promise((resolve) => {
+			const img = new Image();
+			img.onload = () =>
+				resolve({
+					id: `img_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+					name,
+					src: url,
+					img,
+					category
+				});
+			img.onerror = () => resolve(null);
+			img.src = url;
+		});
+
+		if (entry) this.items.push(entry);
+		return entry;
+	}
+
 	/** @param {string} id */
 	remove(id) {
 		const item = this.items.find((i) => i.id === id);
-		if (item) URL.revokeObjectURL(item.src);
+		// Only blob URLs this store made need revoking; a project image is a
+		// plain URL the server serves.
+		if (item?.src.startsWith('blob:')) URL.revokeObjectURL(item.src);
 		this.items = this.items.filter((i) => i.id !== id);
 	}
 

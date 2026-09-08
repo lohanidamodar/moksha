@@ -1,5 +1,6 @@
 <script>
 	import Header from './Header.svelte';
+	import ProjectBar from './ProjectBar.svelte';
 	import CanvasPreview from './CanvasPreview.svelte';
 	import OptionsPanel from './OptionsPanel.svelte';
 	import QueueStrip from './QueueStrip.svelte';
@@ -14,6 +15,7 @@
 
 <div class="editor-shell">
 	<Header />
+	<ProjectBar />
 
 	<div class="editor-body">
 		<div class="editor-left">
