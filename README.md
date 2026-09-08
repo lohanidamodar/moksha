@@ -69,6 +69,9 @@ fails there rather than at upload.
   "design": {
     "background": { "type": "mesh", "id": "aurora" },
     "pattern": { "id": "dots" },
+    // The rhythm across each asset type's strip: a built-in, or your own
+    // array of layout ids. See Templates below.
+    "template": "panoramic",
     // One family per locale: Montserrat has no Devanagari at all, so a Nepali
     // listing needs a different typeface, not different words in the same one.
     "font": { "en": "Montserrat", "ne": "Noto Sans Devanagari" },
@@ -80,7 +83,9 @@ fails there rather than at upload.
     {
       "id": "home",                       // names the output file
       "assetType": "iphone-screenshot",
-      "layout": "tilt-right",
+      // One composition sliced across two tiles: home-1.png and home-2.png.
+      "layout": "panorama",
+      "span": 2,
       "images": { "screenshot": "captures/ios/home.png" },
       "text": [
         {
@@ -100,7 +105,19 @@ fails there rather than at upload.
       "background": { "type": "solid", "id": "custom", "color": "#0f172a" },
       "text": [{ "text": "My App", "anchor": "bottom-center", "fontSize": 0.1 }]
     }
-  ]
+  ],
+
+  // Read only by the studio's store preview.
+  "store": {
+    "subtitle": { "en": "Everything, in one place" },
+    "developer": "PopupBits",
+    "category": "Productivity",
+    "rating": 4.8,
+    "ratingCount": "1.2K Ratings",
+    "ageRating": "4+",
+    "price": "Free",
+    "description": { "en": "Two or three short paragraphs, store voice." }
+  }
 }
 ```
 
@@ -155,11 +172,50 @@ with no network at all. Any other Google Font is fetched once and cached under
 the user's cache directory (`MOKSHA_FONT_CACHE` to move it), so renders stay
 offline and reproducible after that.
 
+### Templates
+
+Five tiles in the same layout read as a spreadsheet. A template is the rhythm
+of a whole strip — a sequence of layouts applied to an asset type's assets in
+order, repeating if it is shorter than the set:
+
+| Template | Rhythm |
+|---|---|
+| `uniform` | Every tile in the project's one layout |
+| `editorial` | A hero opener, a tilt, a left-titled tile, a breather, a counter-tilt |
+| `showcase` | Hero first, then alternating tilts around a right-titled tile |
+| `magazine` | Titled tiles alternating with big devices |
+| `dynamic` | Tilts and perspective, resolving on a hero |
+| `panoramic` | Opens on a two-tile panorama, then settles into single tiles |
+
+Or give your own: `"template": ["hero-center", "tilt-left", "float-up"]`.
+
+It applies per asset type, so the iPhone strip and the Android strip each start
+the rhythm from the beginning — they are separate listings. An asset's own
+`layout` always wins, and a template naming a layout an asset type does not
+have falls through to that type's default.
+
 ### Layouts
 
-All four screenshot asset types share the same 10 layouts: `tilt-right`, `left-title`, `float-up`, `tilt-left`, `right-title`, `bottom-emerge`, `perspective`, `hero-center`, `split-left`, `split-right`.
+All four screenshot asset types share the same 12 layouts: `tilt-right`,
+`left-title`, `float-up`, `tilt-left`, `right-title`, `bottom-emerge`,
+`perspective`, `hero-center`, `split-left`, `split-right`, and the two spanning
+layouts `panorama` and `panorama-center`.
 
-`split-left` + `split-right` are designed as a side-by-side pair — when placed next to each other in your store listing they form one continuous phone visual.
+**Spanning layouts** draw one composition across several store tiles and slice
+it, so a device photographed across two tiles reads as one image when they sit
+next to each other in the listing. One asset entry, `span` files:
+
+```jsonc
+{ "id": "hero", "assetType": "iphone-screenshot", "layout": "panorama", "span": 2 }
+// -> hero-1.png, hero-2.png
+```
+
+`span` goes up to 5 and defaults to the layout's own (2 for both panoramas).
+Drawing once and cropping is what guarantees the seam — a gradient generated
+per-canvas would not match across separately-drawn tiles.
+
+`split-left` + `split-right` are the older hand-built version of the same idea:
+two separate assets you keep in sync yourself.
 
 ### Phone Frames
 
@@ -301,6 +357,10 @@ curl -X POST http://localhost:4321/api/render \
   }' \
   --output mockup.png
 ```
+
+The studio's `/preview` page renders the project as the product page a shopper
+meets — App Store and Google Play, with Play's feature graphic in its real
+place at the head of the listing — so a strip can be judged as a strip.
 
 The studio serves `/api/project` too: `GET` for the open project and every legal
 option, `PUT` to save it, and `POST /api/project/image` to add a capture.

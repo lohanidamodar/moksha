@@ -44,6 +44,9 @@ export function projectDefaults() {
 		locales: ['en'],
 		out: 'out',
 		design: { ...DESIGN_DEFAULTS },
+		// Only the studio's store preview reads this; it is what turns a row of
+		// PNGs into something you can judge the way a shopper sees it.
+		store: {},
 		assets: []
 	};
 }
@@ -102,6 +105,7 @@ export function normalizeProject(raw) {
 			...(raw?.design ?? {}),
 			frames: { ...(raw?.design?.frames ?? {}) }
 		},
+		store: { ...base.store, ...(raw?.store ?? {}) },
 		assets: Array.isArray(raw?.assets) ? raw.assets.map(normalizeAsset) : []
 	};
 	return project;
@@ -228,6 +232,14 @@ export function validateProject(project, registry) {
 		}
 	}
 	if (!project.assets.length) warn('assets', 'The project has no assets yet.');
+
+	for (const field of ['subtitle', 'description', 'promoText']) {
+		const value = project.store?.[field];
+		if (!isLocalisedCopy(value)) continue;
+		for (const locale of project.locales) {
+			if (!(locale in value)) error(`store.${field}`, `No "${locale}" value.`);
+		}
+	}
 
 	const seen = new Set();
 	for (const asset of project.assets) {

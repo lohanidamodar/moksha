@@ -60,6 +60,7 @@
 			{#if project.dirty}
 				<span class="dirty">unsaved</span>
 			{/if}
+			<a class="store-link" href="/preview">Store preview</a>
 			<button class="save" onclick={save} disabled={project.saving || !project.dirty}>
 				{project.saving ? 'Saving…' : 'Save project'}
 			</button>
@@ -138,6 +139,13 @@
 
 	.spacer {
 		flex: 1;
+	}
+
+	.store-link {
+		color: var(--accent, #f97316);
+		text-decoration: none;
+		font-size: 12px;
+		font-weight: 600;
 	}
 
 	.locale select,
