@@ -45,6 +45,7 @@ captures it references.
 | `moksha init [name]` | Write `moksha/moksha.json` for this app |
 | `moksha doctor` | Check the project, the toolchain and the font cache |
 | `moksha validate` | Check the project against the store rules, without rendering |
+| `moksha capture` | Drive the app with Patrol and photograph its screens |
 | `moksha render` | Render every asset, for every locale, and verify it |
 | `moksha studio` | Open the editor on this project (`--port`, `--no-open`) |
 | `moksha schema` | Every legal option, as JSON |
@@ -55,6 +56,43 @@ the working directory, so the commands work anywhere inside the repo),
 
 `render` exits non-zero when anything breaks a store rule, so a release pipeline
 fails there rather than at upload.
+
+## Capture
+
+`moksha capture` drives the app on a device and photographs the screens the
+listing needs — the half that was otherwise manual.
+
+```sh
+moksha capture --scaffold           # the two Dart files the app repo needs
+moksha capture --platform android   # run it
+```
+
+A [Patrol](https://pub.dev/packages/patrol) test walks the app and calls
+`captureScene($, 'home')` at each screen; that call blocks until the host has
+taken and written the shot, so the test cannot navigate away mid-capture. The
+host does the photographing — `adb exec-out screencap` and `xcrun simctl io
+screenshot` — at native resolution.
+
+Patrol rather than plain `integration_test` because it drives the native layer:
+a permission sheet sitting on top of the screen you are photographing can be
+dismissed first. Note its own in-test `takeNativeScreenshot` is *not* what
+Moksha uses — it is documented Android-only and "never throws if the capture
+fails", which is how you end up with a green run and no images.
+
+Before each run the status bar is pinned to 9:41, full battery, no
+notifications, and restored afterwards; `"capture": { "statusBar": false }`
+turns that off. iOS captures need a macOS host with a booted simulator;
+Android works on Windows, WSL, Linux and macOS. Moksha finds `adb` in the SDK
+even when it is not on the PATH, including the Windows-side SDK from WSL
+(`MOKSHA_ADB` overrides).
+
+Captures land in `moksha/captures/<platform>/<scene>.png`. That directory is
+plain PNGs and nothing depends on Moksha having produced them, so an app that
+gets its screenshots another way loses nothing.
+
+A raw capture is not an uploadable asset: a 1080x2340 phone screen is 2.17:1
+with an alpha channel, and Play refuses both. Framing it with `moksha render`
+is what makes it one.
 
 ## The project file
 
@@ -106,6 +144,13 @@ fails there rather than at upload.
       "text": [{ "text": "My App", "anchor": "bottom-center", "fontSize": 0.1 }]
     }
   ],
+
+  // How `moksha capture` drives the app. Leave it out if captures come from
+  // somewhere else.
+  "capture": {
+    "test": "integration_test/store_screenshots.dart",
+    "scenes": ["home", "search", "settings"]
+  },
 
   // Read only by the studio's store preview.
   "store": {

@@ -47,6 +47,9 @@ export function projectDefaults() {
 		// Only the studio's store preview reads this; it is what turns a row of
 		// PNGs into something you can judge the way a shopper sees it.
 		store: {},
+		// How `moksha capture` drives the app. Absent means captures come from
+		// somewhere else, which is fine — captures/ is a plain PNG folder.
+		capture: {},
 		assets: []
 	};
 }
@@ -106,6 +109,7 @@ export function normalizeProject(raw) {
 			frames: { ...(raw?.design?.frames ?? {}) }
 		},
 		store: { ...base.store, ...(raw?.store ?? {}) },
+		capture: { ...base.capture, ...(raw?.capture ?? {}) },
 		assets: Array.isArray(raw?.assets) ? raw.assets.map(normalizeAsset) : []
 	};
 	return project;
@@ -214,6 +218,16 @@ export function validateProject(project, registry) {
 	}
 
 	if (!project.app?.name) warn('app.name', 'No app name, so the studio has nothing to label.');
+
+	const capture = project.capture ?? {};
+	if (Object.keys(capture).length) {
+		if (!capture.test) {
+			error('capture.test', 'A capture block needs a `test` — the Patrol test to run.');
+		}
+		if (capture.scenes != null && !Array.isArray(capture.scenes)) {
+			error('capture.scenes', 'scenes must be an array of scene names.');
+		}
+	}
 
 	const template = project.design?.template;
 	if (template && !Array.isArray(template) && !isTemplateId(template)) {

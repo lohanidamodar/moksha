@@ -10,6 +10,7 @@
 import { readFileSync, realpathSync } from 'node:fs';
 import { argv } from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { capture } from './cli/capture.js';
 import { doctor } from './cli/doctor.js';
 import { init } from './cli/init.js';
 import { render } from './cli/render.js';
@@ -23,6 +24,7 @@ moksha — store assets for the app in this repo
   moksha init [name]   Write moksha/moksha.json for this app
   moksha doctor        Check the project, the toolchain and the font cache
   moksha validate      Check the project against the store rules, without rendering
+  moksha capture       Drive the app with Patrol and photograph its screens
   moksha render        Render every asset, for every locale, and verify it
   moksha studio        Open the editor on this project (--port <n>, --no-open)
   moksha schema        Every legal option, as JSON
@@ -33,9 +35,15 @@ Options
   --locale <code>      Only this locale (default: every locale in the project)
   --asset <id>         Only this asset (repeatable)
   --out <dir>          Override the project's output directory
+
+capture options
+  --platform <p>       android (default) or ios; iOS needs a macOS host
+  --device <id>        Which attached device, when several are
+  --test <path>        The Patrol test to run, overriding the project's
+  --scaffold           Print the two Dart files the app repo needs, and stop
 `;
 
-const COMMANDS = { init, doctor, validate, render, studio, schema };
+const COMMANDS = { init, doctor, validate, capture, render, studio, schema };
 
 /** A tiny flag parser: --name value, --flag, and bare positionals. */
 export function parseArgv(argv) {

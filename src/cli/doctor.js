@@ -8,6 +8,8 @@ import { existsSync, readdirSync, accessSync, constants } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findProjectFile, loadProject, outputDir, displayPath } from '../core/node/project-file.js';
+import { listDevices } from '../core/node/devices.js';
+import { run, adb } from '../core/node/screencap.js';
 import { fontCacheDir, bundledFamilies } from '../core/node/fonts.js';
 import { PROJECT_DIRNAME, PROJECT_FILENAME } from '../core/project.js';
 
@@ -104,7 +106,61 @@ export async function doctor({ flags }) {
 	const out = outputDir(dir, project);
 	add(writable(out), `output  ${displayPath(dir, out)}`, writable(out) ? '' : 'Not writable.');
 
+	// Capture is optional, so it is only checked when the project asks for it.
+	if (Object.keys(project.capture ?? {}).length) await checkCapture(add, project);
+
 	return report(checks);
+}
+
+/** The capture toolchain, checked only when a project uses it. */
+async function checkCapture(add, project) {
+	const patrol = await version('patrol', ['--version']);
+	add(
+		patrol.ok,
+		'patrol_cli',
+		patrol.ok
+			? patrol.text
+			: 'Not on the PATH. Install it with `dart pub global activate patrol_cli`.'
+	);
+
+	const adbCheck = await version(adb(), ['version']);
+	add(
+		adbCheck.ok,
+		`adb  ${adb()}`,
+		adbCheck.ok
+			? adbCheck.text.split('\n')[0]
+			: 'Not found. Install the Android SDK platform-tools, or set MOKSHA_ADB.'
+	);
+
+	if (process.platform === 'darwin') {
+		const xcrun = await version('xcrun', ['simctl', 'help']);
+		add(xcrun.ok, 'xcrun simctl', xcrun.ok ? 'available' : 'Not available; iOS captures need Xcode.');
+	} else {
+		add(true, 'iOS captures', `Not available on ${process.platform}; they need a macOS host.`);
+	}
+
+	const devices = await listDevices();
+	add(
+		devices.length > 0,
+		`devices  ${devices.length}`,
+		devices.length
+			? devices.map((d) => `${d.id}  ${d.name} (${d.platform})`).join('\n      ')
+			: 'None attached. Start an emulator or plug in a phone.'
+	);
+
+	const test = project.capture?.test;
+	add(Boolean(test), 'capture test', test || 'No `capture.test` in the project.');
+}
+
+/** Runs a version command, reporting absence rather than throwing. */
+async function version(command, args) {
+	try {
+		const { code, stdout, stderr } = await run(command, args);
+		const text = (stdout.toString('utf8') || stderr).trim();
+		return { ok: code === 0, text };
+	} catch (e) {
+		return { ok: false, text: e instanceof Error ? e.message : String(e) };
+	}
 }
 
 /**
