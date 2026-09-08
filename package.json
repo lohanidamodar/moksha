@@ -42,7 +42,9 @@
 		"render": "node src/cli.js render",
 		"test": "node --test \"src/**/*.test.js\"",
 		"moksha": "node src/cli.js",
-		"vendor:fonts": "node scripts/vendor-fonts.mjs"
+		"vendor:fonts": "node scripts/vendor-fonts.mjs",
+		"e2e": "node scripts/e2e.mjs",
+		"test:offline": "node --import ./scripts/no-network.mjs --test \"src/core/node/render.test.js\" \"src/core/node/glyphs.test.js\""
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",

@@ -457,6 +457,8 @@ alias, so the browser preview and the exported PNG cannot drift apart.
 npm install
 npm run dev      # the studio, with MOKSHA_PROJECT pointing at a project
 npm test         # node's own test runner, no framework
+npm run e2e      # drives the CLI in a throwaway app repo and checks what lands
+npm run test:offline   # proves the bundled fonts need no network, by removing it
 npm run build    # the studio, which `moksha studio` serves
 npm run vendor:fonts   # re-download assets/fonts (committed; only when the set changes)
 ```
