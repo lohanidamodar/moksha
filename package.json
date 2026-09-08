@@ -1,8 +1,39 @@
 {
-	"name": "moksha",
-	"private": true,
+	"name": "@popupbits/moksha",
 	"version": "0.1.0",
+	"description": "Store assets for a mobile app: screenshots, feature graphics, promo banners and social cards, for the App Store and Google Play.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/lohanidamodar/moksha.git"
+	},
+	"homepage": "https://github.com/lohanidamodar/moksha#readme",
+	"keywords": [
+		"app-store",
+		"google-play",
+		"screenshots",
+		"feature-graphic",
+		"store-assets",
+		"flutter"
+	],
 	"type": "module",
+	"bin": {
+		"moksha": "src/cli.js"
+	},
+	"engines": {
+		"node": ">=20.12.0"
+	},
+	"files": [
+		"src/",
+		"build/",
+		"assets/",
+		"skills/",
+		"README.md",
+		"LICENSE"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -26,29 +57,5 @@
 		"@sveltejs/adapter-node": "^5.5.4",
 		"file-saver": "^2.0.5",
 		"jszip": "^3.10.1"
-	},
-	"description": "Store assets for a mobile app: screenshots, feature graphics, promo banners and social cards, for the App Store and Google Play.",
-	"license": "MIT",
-	"bin": {
-		"moksha": "src/cli.js"
-	},
-	"engines": {
-		"node": ">=20.12.0"
-	},
-	"files": [
-		"src/",
-		"build/",
-		"assets/",
-		"skills/",
-		"README.md",
-		"LICENSE"
-	],
-	"keywords": [
-		"app-store",
-		"google-play",
-		"screenshots",
-		"feature-graphic",
-		"store-assets",
-		"flutter"
-	]
+	}
 }

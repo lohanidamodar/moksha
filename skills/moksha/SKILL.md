@@ -28,8 +28,12 @@ Moksha keeps the whole outcome in one file, so a follow-up is an edit to that
 file, not a fresh start.
 
 ```bash
-ls moksha/moksha.json 2>/dev/null && npx moksha validate
+ls moksha/moksha.json 2>/dev/null && npx @popupbits/moksha validate
 ```
+
+Every command below is written `npx @popupbits/moksha <cmd>`, which needs no
+install. If the user has it installed globally, plain `moksha <cmd>` is the
+same thing.
 
 If it exists, read it in full and skip to **Iterating** below. Together with
 the captures it names, it is the source of truth for every visible choice.
@@ -52,11 +56,11 @@ project's existing assets already answer it; do not ask again.
 ## Step 1: set the project up
 
 ```bash
-npx moksha init "App Name"     # writes moksha/moksha.json
-npx moksha doctor              # says what is missing, and how to fix it
+npx @popupbits/moksha init "App Name"     # writes moksha/moksha.json
+npx @popupbits/moksha doctor              # says what is missing, and how to fix it
 ```
 
-Then read `npx moksha schema` — every legal asset type, size, layout,
+Then read `npx @popupbits/moksha schema` — every legal asset type, size, layout,
 background, pattern, frame, template and font, plus a complete worked example.
 Do not guess these values; the schema is the list.
 
@@ -67,13 +71,13 @@ the captures.
 
 Two routes. Prefer capture when the app runs on a device here.
 
-**Captured (preferred).** `npx moksha capture --scaffold` prints the two Dart
+**Captured (preferred).** `npx @popupbits/moksha capture --scaffold` prints the two Dart
 files the app repo needs: a helper that talks the capture handshake, and a
 Patrol test that walks the app. Write the test yourself — you choose the
 screens. Then:
 
 ```bash
-npx moksha capture --platform android
+npx @popupbits/moksha capture --platform android
 ```
 
 Each scene lands in `moksha/captures/<platform>/<scene>.png`.
@@ -111,7 +115,7 @@ fails the render, but picking the right family up front is better.
 ## Step 4: render and check
 
 ```bash
-npx moksha render
+npx @popupbits/moksha render
 ```
 
 It writes every asset for every locale and exits non-zero if any breaks a
@@ -119,7 +123,7 @@ store rule. Fix what it names; the messages say what is wrong and what is
 allowed. Then show the user the result:
 
 ```bash
-npx moksha studio        # the editor, and /preview for the store page
+npx @popupbits/moksha studio        # the editor, and /preview for the store page
 ```
 
 The studio's `/preview` renders the listing as the product page a shopper
@@ -129,7 +133,7 @@ good", not a folder of PNGs.
 ## Step 5: the preview video, if asked
 
 ```bash
-npx moksha preview --platform ios
+npx @popupbits/moksha preview --platform ios
 ```
 
 One short journey — see the main screen, start a core action, finish it — in

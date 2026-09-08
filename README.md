@@ -17,9 +17,11 @@ find out from a rejection.
 From the app's repo:
 
 ```sh
-npx moksha init "My App"     # writes moksha/moksha.json
-npx moksha studio            # design it in the browser
-npx moksha render            # every asset, every locale, verified
+npm i -g @popupbits/moksha   # or prefix each command with `npx @popupbits/moksha`
+
+moksha init "My App"         # writes moksha/moksha.json
+moksha studio                # design it in the browser
+moksha render                # every asset, every locale, verified
 ```
 
 `render` writes to `moksha/out/`, grouped the way an upload expects, so a folder
