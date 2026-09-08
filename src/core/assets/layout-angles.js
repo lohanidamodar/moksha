@@ -12,7 +12,9 @@ const LAYOUT_ANGLES = {
 	'perspective': 5,
 	'hero-center': 0,
 	'split-left': 0,
-	'split-right': 0
+	'split-right': 0,
+	panorama: -10,
+	'panorama-center': 0
 };
 
 export function getDefaultPhoneAngle(layoutId) {

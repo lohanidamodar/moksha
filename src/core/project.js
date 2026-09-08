@@ -12,27 +12,50 @@
  * every asset inherits, and copy that can carry one string per locale.
  */
 
+import { templateLayout, isTemplateId, TEMPLATE_IDS } from './templates.js';
+
 export const PROJECT_VERSION = 1;
 
 /** The filename, and the directory it conventionally sits in. */
 export const PROJECT_DIRNAME = 'moksha';
 export const PROJECT_FILENAME = 'moksha.json';
 
-/** A project with nothing in it yet, as `moksha init` would write. */
-export function emptyProject(appName = '') {
+/**
+ * What a field means when a project file leaves it out.
+ *
+ * The template default is deliberately `uniform`: filling a missing template
+ * with a real rhythm would silently relayout every asset in a project that
+ * never asked for one. `moksha init` writes a livelier choice into the file
+ * itself, where it is visible and editable.
+ */
+const DESIGN_DEFAULTS = {
+	background: { type: 'gradient', id: 'sunset-pink' },
+	pattern: null,
+	font: 'Montserrat',
+	template: 'uniform',
+	frames: {}
+};
+
+/** The defaults a project falls back to, for anything normalising a file. */
+export function projectDefaults() {
 	return {
 		version: PROJECT_VERSION,
-		app: { name: appName },
+		app: { name: '' },
 		locales: ['en'],
 		out: 'out',
-		design: {
-			background: { type: 'gradient', id: 'sunset-pink' },
-			pattern: null,
-			font: 'Montserrat',
-			frames: {}
-		},
+		design: { ...DESIGN_DEFAULTS },
 		assets: []
 	};
+}
+
+/** A project with nothing in it yet, as `moksha init` writes it. */
+export function emptyProject(appName = '') {
+	const project = projectDefaults();
+	project.app.name = appName;
+	// A new project starts with a rhythm rather than five identical tiles; it
+	// is written into the file so it can be seen and changed.
+	project.design.template = 'editorial';
+	return project;
 }
 
 /**
@@ -68,7 +91,7 @@ export function isLocalisedCopy(value) {
  * validateProject is what reports the parts that are actually wrong.
  */
 export function normalizeProject(raw) {
-	const base = emptyProject();
+	const base = projectDefaults();
 	const project = {
 		version: Number(raw?.version) || PROJECT_VERSION,
 		app: { ...base.app, ...(raw?.app ?? {}) },
@@ -90,6 +113,7 @@ function normalizeAsset(raw, index) {
 		assetType: raw?.assetType,
 		sizeId: raw?.sizeId ?? null,
 		layout: raw?.layout ?? null,
+		span: raw?.span ?? null,
 		images: { ...(raw?.images ?? {}) },
 		background: raw?.background ?? null,
 		pattern: raw?.pattern === undefined ? undefined : raw.pattern,
@@ -120,7 +144,7 @@ export function resolveAsset(project, asset, locale, module) {
 	return {
 		assetType: asset.assetType,
 		sizeId: asset.sizeId ?? undefined,
-		layout: asset.layout ?? module?.layouts?.[0]?.id,
+		layout: resolveLayout(project, asset, module),
 		background: asset.background ?? design.background,
 		// A pattern is meaningfully absent, so `null` on the asset means "no
 		// pattern here" and must not fall through to the project's.
@@ -137,6 +161,30 @@ export function resolveAsset(project, asset, locale, module) {
 			font: resolveCopy(overlay.font, locale) || designFont
 		}))
 	};
+}
+
+/**
+ * The layout one asset renders with.
+ *
+ * Precedence: the asset's own choice, then the template's entry for its
+ * position in its type's strip, then the project default, then the asset
+ * type's first layout.
+ */
+export function resolveLayout(project, asset, module) {
+	if (asset.layout) return asset.layout;
+
+	const position = (project.assets ?? [])
+		.filter((a) => a.assetType === asset.assetType)
+		.findIndex((a) => a.id === asset.id);
+
+	const fromTemplate =
+		position === -1 ? undefined : templateLayout(project.design?.template, position);
+
+	const candidate = fromTemplate ?? project.design?.layout;
+	// A template may name a layout an asset type does not have — a feature
+	// graphic has no "tilt-right" — so fall through rather than render nothing.
+	if (candidate && module?.layouts?.some((l) => l.id === candidate)) return candidate;
+	return module?.layouts?.[0]?.id;
 }
 
 /**
@@ -162,6 +210,15 @@ export function validateProject(project, registry) {
 	}
 
 	if (!project.app?.name) warn('app.name', 'No app name, so the studio has nothing to label.');
+
+	const template = project.design?.template;
+	if (template && !Array.isArray(template) && !isTemplateId(template)) {
+		error(
+			'design.template',
+			`Unknown template "${template}". Try one of: ${TEMPLATE_IDS.join(', ')}, ` +
+				'or give an array of layout ids.'
+		);
+	}
 
 	if (isLocalisedCopy(project.design?.font)) {
 		for (const locale of project.locales) {
@@ -198,6 +255,17 @@ export function validateProject(project, registry) {
 				`"${asset.layout}" is not a layout of ${asset.assetType}. ` +
 					`Try one of: ${module.layouts.map((l) => l.id).join(', ')}.`
 			);
+		}
+
+		if (asset.span != null) {
+			const span = Number(asset.span);
+			if (!Number.isInteger(span) || span < 1 || span > 5) {
+				error(where, `span must be a whole number from 1 to 5; got ${JSON.stringify(asset.span)}.`);
+			} else if (span > 1 && !asset.assetType.endsWith('-screenshot')) {
+				// Only a screenshot strip is scrolled through, so only it has
+				// neighbouring tiles for a composition to span.
+				error(where, `${asset.assetType} is a single asset; it cannot span ${span} tiles.`);
+			}
 		}
 
 		const frame = asset.phoneFrame ?? project.design?.frames?.[asset.assetType];

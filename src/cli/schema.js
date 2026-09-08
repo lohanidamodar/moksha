@@ -10,6 +10,7 @@ import { PHONE_FRAMES } from '../core/renderer/phone-frame.js';
 import { ANCHOR_IDS } from '../core/renderer/text-overlays.js';
 import { GOOGLE_FONTS } from '../core/fonts.js';
 import { PROJECT_VERSION, emptyProject } from '../core/project.js';
+import { TEMPLATES } from '../core/templates.js';
 
 export function schema() {
 	console.log(
@@ -23,6 +24,11 @@ export function schema() {
 					solid: [...SOLIDS.map((s) => s.id), 'custom']
 				},
 				patterns: PATTERNS.map((p) => p.id),
+				templates: Object.values(TEMPLATES).map((t) => ({
+					id: t.id,
+					description: t.description,
+					sequence: t.sequence
+				})),
 				phoneFrames: PHONE_FRAMES.map((f) => f.id ?? f),
 				textAnchors: ANCHOR_IDS,
 				fonts: GOOGLE_FONTS.map((f) => f.family),
@@ -44,13 +50,17 @@ function exampleProject() {
 			background: { type: 'mesh', id: 'aurora' },
 			pattern: { id: 'dots' },
 			font: 'Montserrat',
+			// The rhythm across each asset type's strip.
+			template: 'panoramic',
 			frames: { 'android-phone-screenshot': 'pixel-black' }
 		},
 		assets: [
 			{
 				id: 'home',
 				assetType: 'iphone-screenshot',
-				layout: 'tilt-right',
+				// One composition across two store tiles: home-1.png, home-2.png.
+				layout: 'panorama',
+				span: 2,
 				images: { screenshot: 'captures/ios/home.png' },
 				text: [
 					{

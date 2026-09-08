@@ -9,7 +9,11 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getAssetType } from '../core/assets/index.js';
 import { resolveAsset } from '../core/project.js';
-import { renderStoreAsset } from '../core/node/canvas.js';
+import { layoutSpan } from '../core/assets/_screenshot-shared.js';
+import { resolveSpan, tileNames } from '../core/panorama.js';
+import { renderStoreAsset, renderPanorama, resolveSize } from '../core/node/canvas.js';
+import { validateStoreAsset } from '../core/validate.js';
+import { readPngHeader } from '../core/png.js';
 import { imagePath, outputDir } from '../core/node/project-file.js';
 import { requireProject, selectedAssets, selectedLocales, displayPath } from './project-arg.js';
 
@@ -50,26 +54,60 @@ export async function render({ flags }) {
 			const module = getAssetType(asset.assetType);
 			const config = resolveAsset(project, asset, locale, module);
 			const images = loadImages(dir, asset);
+			const span = resolveSpan(asset.span, layoutSpan(config.layout));
 
-			const { buffer, size, problems: assetProblems } = await renderStoreAsset(config, images);
-			const target = join(localeDir, folderFor(module, size), `${asset.id}.png`);
-			mkdirSync(join(localeDir, folderFor(module, size)), { recursive: true });
-			writeFileSync(target, buffer);
-			written++;
+			for (const tile of await renderTiles(config, images, module, span)) {
+				const folder = join(localeDir, folderFor(module, tile.size));
+				mkdirSync(folder, { recursive: true });
+				const target = join(folder, `${tile.name(asset.id)}.png`);
+				writeFileSync(target, tile.buffer);
+				written++;
 
-			const shown = displayPath(dir, target);
-			if (assetProblems.length) {
-				failed++;
-				console.error(`✗ ${shown}  ${size.w}x${size.h}`);
-				for (const problem of assetProblems) console.error(`    ${problem.message}`);
-			} else {
-				console.log(`✓ ${shown}  ${size.w}x${size.h}`);
+				const shown = displayPath(dir, target);
+				if (tile.problems.length) {
+					failed++;
+					console.error(`✗ ${shown}  ${tile.size.w}x${tile.size.h}`);
+					for (const problem of tile.problems) console.error(`    ${problem.message}`);
+				} else {
+					console.log(`✓ ${shown}  ${tile.size.w}x${tile.size.h}`);
+				}
 			}
 		}
 	}
 
 	console.log(`\n${written - failed}/${written} asset(s) -> ${displayPath(process.cwd(), root)}`);
 	return failed === 0 ? 0 : 1;
+}
+
+/**
+ * The rendered tiles for one asset: one, or `span` slices of a panorama.
+ *
+ * Each slice is checked like any other asset — the crop is what gets uploaded,
+ * so it is the crop's dimensions and colour type that have to satisfy the store.
+ */
+async function renderTiles(config, images, module, span) {
+	if (span <= 1) {
+		const { buffer, size, problems } = await renderStoreAsset(config, images);
+		return [{ buffer, size, problems, name: (id) => id }];
+	}
+
+	const size = resolveSize(module, config.sizeId);
+	const buffers = await renderPanorama(config, images, span);
+	const names = tileNames('', span);
+
+	return buffers.map((buffer, index) => {
+		const header = readPngHeader(buffer);
+		const problems = header
+			? validateStoreAsset({
+					width: header.width,
+					height: header.height,
+					platform: size.platform ?? null,
+					storeKind: size.storeKind,
+					hasAlpha: header.hasAlpha
+				})
+			: [{ level: 'error', message: 'Rendered output is not a readable PNG.' }];
+		return { buffer, size, problems, name: (id) => `${id}${names[index]}` };
+	});
 }
 
 function loadImages(projectDir, asset) {

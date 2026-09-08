@@ -8,9 +8,33 @@ import { canvasToStorePng } from './png.js';
 import { validateStoreAsset } from '../validate.js';
 import { readPngHeader } from '../png.js';
 import { registerFonts, findMissingGlyphs } from './fonts.js';
+import { compositionConfig, tileRect } from '../panorama.js';
 
 /** The renderer's fallback family, when an overlay names none. */
 const DEFAULT_FONT = 'Inter';
+
+/** Decode every supplied image buffer once. */
+async function loadImages(imageBuffers) {
+	const images = {};
+	for (const [key, buffer] of Object.entries(imageBuffers)) {
+		if (buffer) images[key] = await loadImage(buffer);
+	}
+	return images;
+}
+
+/** The defaults an asset module expects, filled in from a partial config. */
+function renderConfig(config, module, images) {
+	return {
+		layout: config.layout || module.layouts[0].id,
+		background: config.background || { type: 'gradient', id: 'sunset-pink' },
+		pattern: config.pattern || null,
+		phoneFrame: config.phoneFrame || 'iphone-dynamic-island',
+		transforms: config.transforms || undefined,
+		textOverlays: Array.isArray(config.textOverlays) ? config.textOverlays : [],
+		span: config.span ?? 1,
+		images
+	};
+}
 
 /** The families a config's text overlays ask for. */
 function overlayFonts(config) {
@@ -72,31 +96,51 @@ export async function renderAsset(config, imageBuffers = {}) {
 	// renders as boxes.
 	await registerFonts(overlayFonts(config));
 
-	// Load images from buffers
-	const images = {};
-	for (const [key, buffer] of Object.entries(imageBuffers)) {
-		if (buffer) {
-			images[key] = await loadImage(buffer);
-		}
-	}
+	const images = await loadImages(imageBuffers);
 
-	// Create canvas and render
 	const canvas = createCanvas(size.w, size.h);
-	const ctx = canvas.getContext('2d');
-
-	module.render(ctx, {
-		layout: config.layout || module.layouts[0].id,
-		background: config.background || { type: 'gradient', id: 'sunset-pink' },
-		pattern: config.pattern || null,
-		phoneFrame: config.phoneFrame || 'iphone-dynamic-island',
-		transforms: config.transforms || undefined,
-		textOverlays: Array.isArray(config.textOverlays) ? config.textOverlays : [],
-		images
-	}, size.w, size.h);
+	module.render(canvas.getContext('2d'), renderConfig(config, module, images), size.w, size.h);
 
 	// Not canvas.toBuffer('image/png'): that is always RGBA, and both stores
 	// refuse an alpha channel. This re-encodes losslessly as 24-bit.
 	return canvasToStorePng(canvas);
+}
+
+/**
+ * Render a spanning composition and slice it into store tiles.
+ *
+ * The composition is drawn once at `span` tile-widths and cropped, rather than
+ * drawn `span` times with offset coordinates: one draw is what guarantees the
+ * seams line up, and a gradient or pattern that is generated per-canvas would
+ * not match across separately-drawn tiles.
+ *
+ * @returns {Promise<Buffer[]>} one PNG a tile, in store order
+ */
+export async function renderPanorama(config, imageBuffers = {}, span = 2) {
+	const module = getAssetType(config.assetType);
+	if (!module) throw new Error(`Unknown asset type: ${config.assetType}`);
+
+	const size = resolveSize(module, config.sizeId);
+	await registerFonts(overlayFonts(config));
+
+	const images = await loadImages(imageBuffers);
+	const composition = createCanvas(size.w * span, size.h);
+
+	module.render(
+		composition.getContext('2d'),
+		renderConfig(compositionConfig(config, span), module, images),
+		size.w * span,
+		size.h
+	);
+
+	const tiles = [];
+	for (let index = 0; index < span; index++) {
+		const { sx, sy, sw, sh } = tileRect(index, span, size.w, size.h);
+		const tile = createCanvas(size.w, size.h);
+		tile.getContext('2d').drawImage(composition, sx, sy, sw, sh, 0, 0, size.w, size.h);
+		tiles.push(await canvasToStorePng(tile));
+	}
+	return tiles;
 }
 
 /**

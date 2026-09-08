@@ -63,3 +63,47 @@ for (const type of assetTypes) {
 test('an unknown asset type is refused rather than rendered blank', async () => {
 	await assert.rejects(() => renderStoreAsset({ assetType: 'not-a-thing' }), /Unknown asset type/);
 });
+
+test('a panorama slices into tiles that are each store-legal', async () => {
+	const { renderPanorama } = await import('./canvas.js');
+	const span = 3;
+	const buffers = await renderPanorama(
+		{
+			assetType: 'iphone-screenshot',
+			sizeId: 'ios-6.9',
+			layout: 'panorama',
+			background: { type: 'gradient', id: 'emerald' },
+			pattern: { id: 'dots' },
+			phoneFrame: 'iphone-dynamic-island',
+			textOverlays: []
+		},
+		{ screenshot: capture },
+		span
+	);
+
+	assert.equal(buffers.length, span);
+	for (const [index, buffer] of buffers.entries()) {
+		const header = readPngHeader(buffer);
+		assert.equal(header.width, 1320, `tile ${index} width`);
+		assert.equal(header.height, 2868, `tile ${index} height`);
+		assert.equal(header.hasAlpha, false, `tile ${index} carries alpha`);
+	}
+});
+
+test('neighbouring tiles differ, so the composition really was sliced', async () => {
+	const { renderPanorama } = await import('./canvas.js');
+	const [left, right] = await renderPanorama(
+		{
+			assetType: 'android-phone-screenshot',
+			layout: 'panorama',
+			background: { type: 'gradient', id: 'ocean' },
+			phoneFrame: 'pixel-black',
+			textOverlays: []
+		},
+		{ screenshot: capture },
+		2
+	);
+	// Two crops of one composition: same size, different pixels. Identical
+	// tiles would mean the composition was drawn per-tile instead of sliced.
+	assert.notEqual(left.toString('base64'), right.toString('base64'));
+});

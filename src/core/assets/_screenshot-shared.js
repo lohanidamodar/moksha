@@ -12,11 +12,16 @@ import { renderTextOverlays } from '../renderer/text-overlays.js';
 /**
  * Returns phone positioning for a given layout id.
  *
- * Phone frame aspect ratio is derived from the canvas (= device) aspect,
- * so iPhone frames look like iPhones, iPads look like iPads, etc.
+ * The frame's aspect comes from the device, which is the canvas aspect for a
+ * normal tile — but a panorama draws into a canvas `span` tiles wide, and
+ * taking the aspect from that turns an iPhone into a squat tablet. So the
+ * aspect is always computed from one tile's width.
+ *
+ * @param {number} span — tiles this composition covers; 1 for a normal asset
  */
-export function getLayout(layout, w, h) {
-	const ar = h / w;
+export function getLayout(layout, w, h, span = 1) {
+	const tileW = w / span;
+	const ar = h / tileW;
 
 	const pw = w * 0.56;
 	const pwSmall = w * 0.52;
@@ -46,6 +51,17 @@ export function getLayout(layout, w, h) {
 			return { phone: { x: w, y: h * 0.52, w: pwSplit, h: pwSplit * ar, angle: 0 } };
 		case 'split-right':
 			return { phone: { x: 0, y: h * 0.52, w: pwSplit, h: pwSplit * ar, angle: 0 } };
+		case 'panorama': {
+			// Composition space: w is the whole strip, not one tile. One large
+			// tilted device crossing the seams, with the copy left of it. Sized
+			// off the tile so the device stays a device however wide the strip.
+			const pwPano = tileW * 0.78;
+			return { phone: { x: w * 0.6, y: h * 0.58, w: pwPano, h: pwPano * ar, angle: -10 } };
+		}
+		case 'panorama-center': {
+			const pwPanoC = tileW * 0.82;
+			return { phone: { x: w * 0.5, y: h * 0.55, w: pwPanoC, h: pwPanoC * ar, angle: 0 } };
+		}
 		default:
 			return { phone: { x: w * 0.5, y: h * 0.52, w: pw, h: pw * ar, angle: 0 } };
 	}
@@ -62,8 +78,21 @@ export const SCREENSHOT_LAYOUTS = [
 	{ id: 'perspective', label: 'Perspective' },
 	{ id: 'hero-center', label: 'Hero Center' },
 	{ id: 'split-left', label: 'Split Left' },
-	{ id: 'split-right', label: 'Split Right' }
+	{ id: 'split-right', label: 'Split Right' },
+	// Spanning layouts: one composition sliced across `span` store tiles.
+	{ id: 'panorama', label: 'Panorama', span: 2 },
+	{ id: 'panorama-center', label: 'Panorama (centred)', span: 2 }
 ];
+
+/** Layouts whose composition covers more than one store tile. */
+export const SPANNING_LAYOUTS = new Set(
+	SCREENSHOT_LAYOUTS.filter((l) => l.span).map((l) => l.id)
+);
+
+/** How many tiles a layout covers by default. */
+export function layoutSpan(layoutId) {
+	return SCREENSHOT_LAYOUTS.find((l) => l.id === layoutId)?.span ?? 1;
+}
 
 /** Shared inputs */
 export const SCREENSHOT_INPUTS = [
@@ -78,7 +107,7 @@ export function renderScreenshot(ctx, config, baseW, baseH) {
 	renderBackgroundAndPattern(ctx, w, h, config.background, config.pattern);
 
 	const tone = getBackgroundTone(config.background);
-	const { phone: p } = getLayout(config.layout, w, h);
+	const { phone: p } = getLayout(config.layout, w, h, config.span ?? 1);
 
 	const pt = config.transforms?.phone ?? { x: 0, y: 0, scale: 1, rotation: null };
 	const phoneX = p.x + (pt.x / 100) * w;
