@@ -149,8 +149,11 @@ valid image file a store then refuses — or one nobody notices is broken:
   Montserrat draws Nepali as a row of identical boxes. Both are reported
   against the asset they affect.
 
-Fonts are cached under the user's cache directory after first use
-(`MOKSHA_FONT_CACHE` to move it), so renders work offline and reproducibly.
+Five families ship with the package — Inter, Montserrat, Lato, Bebas Neue and
+Noto Sans Devanagari — so a fresh clone renders its own defaults, and Nepali,
+with no network at all. Any other Google Font is fetched once and cached under
+the user's cache directory (`MOKSHA_FONT_CACHE` to move it), so renders stay
+offline and reproducible after that.
 
 ### Layouts
 
@@ -314,4 +317,5 @@ npm install
 npm run dev      # the studio, with MOKSHA_PROJECT pointing at a project
 npm test         # node's own test runner, no framework
 npm run build    # the studio, which `moksha studio` serves
+npm run vendor:fonts   # re-download assets/fonts (committed; only when the set changes)
 ```

@@ -51,3 +51,34 @@ test('a family with no faces asked for is not a failure', async () => {
 		assert.deepEqual(await registerFonts([]), []);
 	});
 });
+
+test('the bundled families are what the package ships', async () => {
+	await withCache(({ bundledFamilies }) => {
+		const families = bundledFamilies();
+		// Inter is the renderer's fallback and Montserrat the studio's default,
+		// so a package missing either renders its own defaults over the network.
+		assert.ok(families.includes('Inter'), families.join(', '));
+		assert.ok(families.includes('Montserrat'), families.join(', '));
+		// Devanagari has to be here: it is the script the fetched defaults cannot
+		// draw, and the reason a Nepali listing shipped boxes.
+		assert.ok(families.includes('Noto Sans Devanagari'), families.join(', '));
+	});
+});
+
+test('a bundled family registers with no cache and no network', async () => {
+	await withCache(async ({ registerFont }) => {
+		const result = await registerFont('Inter');
+		assert.equal(result.registered, true);
+		assert.equal(result.bundled, true);
+		assert.equal(result.fromCache, false);
+		assert.ok(result.faces > 0);
+	});
+});
+
+test('a bundled Devanagari family actually covers the script', async () => {
+	await withCache(async ({ registerFont, findMissingGlyphs }) => {
+		await registerFont('Noto Sans Devanagari');
+		const nepali = String.fromCodePoint(0x092b, 0x0947, 0x0915);
+		assert.deepEqual(findMissingGlyphs('Noto Sans Devanagari', nepali), []);
+	});
+});

@@ -8,7 +8,7 @@ import { existsSync, readdirSync, accessSync, constants } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findProjectFile, loadProject, outputDir, displayPath } from '../core/node/project-file.js';
-import { fontCacheDir } from '../core/node/fonts.js';
+import { fontCacheDir, bundledFamilies } from '../core/node/fonts.js';
 import { PROJECT_DIRNAME, PROJECT_FILENAME } from '../core/project.js';
 
 const MIN_NODE_MAJOR = 20;
@@ -33,14 +33,23 @@ export async function doctor({ flags }) {
 		add(false, 'renderer (@napi-rs/canvas)', `Failed to load: ${e instanceof Error ? e.message : e}`);
 	}
 
+	const bundled = bundledFamilies();
+	add(
+		bundled.length > 0,
+		`bundled fonts  ${bundled.length}`,
+		bundled.length
+			? `${bundled.join(', ')} — these render with no network`
+			: 'None bundled. Run `npm run vendor:fonts` in a checkout.'
+	);
+
 	const cache = fontCacheDir();
 	const cachedFamilies = existsSync(cache) ? readdirSync(cache).length : 0;
 	add(
 		true,
 		`font cache  ${cache}`,
 		cachedFamilies
-			? `${cachedFamilies} family(ies) cached — renders work offline`
-			: 'empty; the first render fetches from Google Fonts and caches for later'
+			? `${cachedFamilies} further family(ies) cached`
+			: 'empty; any font beyond the bundled ones is fetched once and cached'
 	);
 
 	const studioEntry = fileURLToPath(new URL('../../build/index.js', import.meta.url));

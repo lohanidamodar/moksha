@@ -8,16 +8,52 @@
  * fetch, and a family that still fails to register is reported to the caller
  * rather than warned about on a console nobody reads.
  *
- * Set MOKSHA_FONT_CACHE to move the cache; it defaults under the user's cache
- * directory so a warm machine renders with no network at all.
+ * A handful of families are bundled with the package outright, so a fresh
+ * clone renders its own defaults — and Devanagari — with no network ever. Set
+ * MOKSHA_FONT_CACHE to move the cache for everything else; it defaults under
+ * the user's cache directory, so a warm machine also renders offline.
+ *
+ * Order: bundled, then cache, then Google Fonts.
  */
 import { mkdirSync, readdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 
 /** Registered this process, so a batch of assets fetches each family once. */
 const attempted = new Map();
+
+/** Where the package keeps the families it ships. */
+export function bundledFontDir() {
+	return join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'assets', 'fonts');
+}
+
+/**
+ * Faces bundled for [family], by the naming the vendor script writes:
+ * `FamilyNameWithoutSpaces-<weight>.ttf`.
+ */
+function bundledFaces(family) {
+	const dir = bundledFontDir();
+	if (!existsSync(dir)) return [];
+	const prefix = `${family.replace(/\s+/g, '')}-`;
+	return readdirSync(dir)
+		.filter((name) => name.startsWith(prefix) && /\.(ttf|otf)$/i.test(name))
+		.map((name) => join(dir, name));
+}
+
+/** The families this package ships, for `moksha doctor` to report. */
+export function bundledFamilies() {
+	const dir = bundledFontDir();
+	if (!existsSync(dir)) return [];
+	const names = new Set();
+	for (const file of readdirSync(dir)) {
+		const match = file.match(/^(.+)-\d+\.(?:ttf|otf)$/i);
+		// Undo the slug: "NotoSansDevanagari" -> "Noto Sans Devanagari".
+		if (match) names.add(match[1].replace(/([a-z0-9])([A-Z])/g, '$1 $2'));
+	}
+	return [...names].sort();
+}
 
 function cacheRoot() {
 	if (process.env.MOKSHA_FONT_CACHE) return process.env.MOKSHA_FONT_CACHE;
@@ -95,10 +131,17 @@ async function downloadFaces(family) {
 export async function registerFont(family) {
 	if (attempted.has(family)) return attempted.get(family);
 
-	const result = { family, registered: false, faces: 0, fromCache: false };
+	const result = { family, registered: false, faces: 0, fromCache: false, bundled: false };
 	try {
-		result.faces = registerFromDisk(family);
-		result.fromCache = result.faces > 0;
+		// Bundled first: it needs no network and cannot go stale.
+		for (const file of bundledFaces(family)) {
+			GlobalFonts.register(readFileSync(file), family);
+			result.faces++;
+		}
+		result.bundled = result.faces > 0;
+
+		if (result.faces === 0) result.faces = registerFromDisk(family);
+		result.fromCache = !result.bundled && result.faces > 0;
 		if (result.faces === 0) {
 			await downloadFaces(family);
 			result.faces = registerFromDisk(family);

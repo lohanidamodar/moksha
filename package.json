@@ -10,7 +10,8 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"render": "node src/cli.js render",
 		"test": "node --test \"src/**/*.test.js\"",
-		"moksha": "node src/cli.js"
+		"moksha": "node src/cli.js",
+		"vendor:fonts": "node scripts/vendor-fonts.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",
@@ -37,6 +38,7 @@
 	"files": [
 		"src/",
 		"build/",
+		"assets/",
 		"README.md",
 		"LICENSE"
 	],
