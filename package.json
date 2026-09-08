@@ -8,8 +8,9 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"render": "vite-node scripts/render-cli.mjs",
-		"test": "node --test \"src/core/**/*.test.js\""
+		"render": "node src/cli.js render",
+		"test": "node --test \"src/**/*.test.js\"",
+		"moksha": "node src/cli.js"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",
@@ -24,5 +25,27 @@
 		"@sveltejs/adapter-node": "^5.5.4",
 		"file-saver": "^2.0.5",
 		"jszip": "^3.10.1"
-	}
+	},
+	"description": "Store assets for a mobile app: screenshots, feature graphics, promo banners and social cards, for the App Store and Google Play.",
+	"license": "MIT",
+	"bin": {
+		"moksha": "src/cli.js"
+	},
+	"engines": {
+		"node": ">=20.12.0"
+	},
+	"files": [
+		"src/",
+		"build/",
+		"README.md",
+		"LICENSE"
+	],
+	"keywords": [
+		"app-store",
+		"google-play",
+		"screenshots",
+		"feature-graphic",
+		"store-assets",
+		"flutter"
+	]
 }

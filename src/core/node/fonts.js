@@ -14,7 +14,7 @@
 import { mkdirSync, readdirSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { GlobalFonts } from '@napi-rs/canvas';
+import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
 
 /** Registered this process, so a batch of assets fetches each family once. */
 const attempted = new Map();
@@ -126,3 +126,75 @@ export async function registerFonts(families) {
 
 /** Where faces are cached, for `moksha doctor` to report. */
 export const fontCacheDir = cacheRoot;
+
+/**
+ * The last private-use codepoint, which no real typeface maps. Built rather
+ * than written as an escape so this file stays plain ASCII.
+ */
+const UNMAPPED_CODEPOINT = String.fromCodePoint(0x10fffd);
+
+/**
+ * Characters [family] has no glyph for.
+ *
+ * Registering a family is not the same as it covering the text: Montserrat
+ * registers perfectly and then renders Devanagari as a row of identical
+ * boxes, and a listing full of boxes is a valid PNG that no dimension check
+ * catches. This is what catches it.
+ *
+ * A font's .notdef glyph is one shape, so a character that draws exactly like
+ * an unassigned codepoint has no glyph of its own.
+ *
+ * @param {string} family
+ * @param {string} text
+ * @returns {string[]} the distinct characters that would render as boxes
+ */
+export function findMissingGlyphs(family, text) {
+	const characters = [...new Set([...String(text)])].filter((c) => !/\s/.test(c));
+	if (!characters.length) return [];
+
+	const notdef = glyphFingerprint(family, UNMAPPED_CODEPOINT);
+	// A family with no .notdef of its own gives nothing to compare against.
+	if (!notdef) return [];
+
+	const missing = [];
+	for (const character of characters) {
+		const key = family + ' ' + character;
+		if (!glyphCache.has(key)) {
+			glyphCache.set(key, glyphFingerprint(family, character) === notdef);
+		}
+		if (glyphCache.get(key)) missing.push(character);
+	}
+	return missing;
+}
+
+const glyphCache = new Map();
+
+/** A cheap bitmap signature of one character drawn in one family. */
+function glyphFingerprint(family, character) {
+	const canvas = fingerprintCanvas();
+	const ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = '#000';
+	ctx.font = '400 32px "' + family + '"';
+	ctx.textBaseline = 'top';
+	ctx.fillText(character, 3, 3);
+
+	const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+	let signature = '';
+	let ink = 0;
+	// Every fourth pixel's alpha is plenty to tell two glyph shapes apart and
+	// keeps the signature short enough to compare cheaply.
+	for (let i = 3; i < data.length; i += 16) {
+		const on = data[i] > 32 ? 1 : 0;
+		ink += on;
+		signature += on;
+	}
+	// Nothing drawn at all is not a box, and a space is not a missing glyph.
+	return ink === 0 ? null : signature;
+}
+
+let sharedCanvas;
+function fingerprintCanvas() {
+	if (!sharedCanvas) sharedCanvas = createCanvas(48, 48);
+	return sharedCanvas;
+}

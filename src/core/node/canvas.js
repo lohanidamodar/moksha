@@ -7,13 +7,41 @@ import { getAssetType } from '../assets/index.js';
 import { canvasToStorePng } from './png.js';
 import { validateStoreAsset } from '../validate.js';
 import { readPngHeader } from '../png.js';
-import { registerFonts } from './fonts.js';
+import { registerFonts, findMissingGlyphs } from './fonts.js';
+
+/** The renderer's fallback family, when an overlay names none. */
+const DEFAULT_FONT = 'Inter';
 
 /** The families a config's text overlays ask for. */
 function overlayFonts(config) {
 	return (config.textOverlays ?? [])
 		.map((o) => o?.font)
 		.filter((f) => typeof f === 'string' && f.length > 0);
+}
+
+/**
+ * Text an overlay's own font has no glyphs for.
+ *
+ * The failure this catches: Montserrat registers fine and then draws Nepali as
+ * a row of boxes. Nothing about the resulting PNG is wrong except that it is
+ * unusable, so it has to be reported at render time or not at all.
+ */
+function glyphProblems(config) {
+	const problems = [];
+	for (const overlay of config.textOverlays ?? []) {
+		const text = typeof overlay?.text === 'string' ? overlay.text : '';
+		if (!text.trim()) continue;
+		const family = overlay.font ?? DEFAULT_FONT;
+		const missing = findMissingGlyphs(family, text);
+		if (!missing.length) continue;
+		problems.push({
+			level: 'error',
+			message:
+				`"${family}" has no glyph for ${missing.map((c) => JSON.stringify(c)).join(', ')}, ` +
+				`so ${JSON.stringify(text)} renders as boxes. Pick a family that covers this script.`
+		});
+	}
+	return problems;
 }
 
 /**
@@ -101,8 +129,11 @@ export async function renderStoreAsset(config, imageBuffers = {}) {
 			})
 		: [{ level: 'error', message: 'Rendered output is not a readable PNG.' }];
 
-	// A font that did not register produces a perfectly valid PNG full of
-	// boxes, which is exactly the class of failure this check exists for.
+	// Both font failures produce a perfectly valid PNG full of boxes, which is
+	// exactly the class of failure these checks exist for: a family that never
+	// registered, and one that registered without covering the script.
+	problems.push(...glyphProblems(config));
+
 	for (const failure of fontFailures) {
 		problems.push({
 			level: 'error',
