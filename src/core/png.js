@@ -3,15 +3,21 @@
  *
  * Both stores refuse an alpha channel — Google Play wants "JPEG or 24-bit PNG
  * (no alpha)" and App Store Connect says screenshots "cannot include alpha
- * channels or transparencies". @napi-rs/canvas only encodes RGBA (PNG colour
- * type 6), and exposes no option to drop the channel, so assets rendered
- * straight from the canvas are rejectable.
+ * channels or transparencies". Neither canvas implementation can encode
+ * without one: @napi-rs/canvas only writes RGBA (PNG colour type 6), and the
+ * browser's toBlob('image/png') is RGBA too. So assets taken straight from
+ * either canvas are rejectable.
  *
  * JPEG would sidestep it, but these assets are mostly flat colour and large
  * type, which is exactly what JPEG rings around. So this re-encodes losslessly
  * as colour type 2 instead.
+ *
+ * Deflate is injected rather than imported, because the two platforms spell it
+ * differently — node:zlib here, CompressionStream in a browser — and this file
+ * has to stay loadable in both.
  */
-import { deflateSync } from 'node:zlib';
+
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 
 const CRC_TABLE = (() => {
 	const table = new Int32Array(256);
@@ -25,25 +31,40 @@ const CRC_TABLE = (() => {
 	return table;
 })();
 
-function crc32(buf) {
+function crc32(bytes) {
 	let c = -1;
-	for (let i = 0; i < buf.length; i++) {
-		c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+	for (let i = 0; i < bytes.length; i++) {
+		c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
 	}
 	return (c ^ -1) >>> 0;
 }
 
+function concat(chunks) {
+	let total = 0;
+	for (const c of chunks) total += c.length;
+	const out = new Uint8Array(total);
+	let at = 0;
+	for (const c of chunks) {
+		out.set(c, at);
+		at += c.length;
+	}
+	return out;
+}
+
 function chunk(type, data) {
-	const length = Buffer.alloc(4);
-	length.writeUInt32BE(data.length, 0);
-	const typeAndData = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-	const crc = Buffer.alloc(4);
-	crc.writeUInt32BE(crc32(typeAndData), 0);
-	return Buffer.concat([length, typeAndData, crc]);
+	const out = new Uint8Array(12 + data.length);
+	const view = new DataView(out.buffer);
+	view.setUint32(0, data.length);
+	for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+	out.set(data, 8);
+	// The CRC covers the type and the data, not the length.
+	view.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+	return out;
 }
 
 /**
- * Encode RGBA pixel data as a 24-bit (colour type 2) PNG, dropping alpha.
+ * Flatten RGBA pixels to the filtered scanlines a colour-type-2 PNG stores:
+ * one filter byte per row (filter 0, "None") followed by three bytes a pixel.
  *
  * Any partially transparent pixel is composited over [background] first, so a
  * translucent edge becomes a real colour rather than being cut to black.
@@ -52,12 +73,11 @@ function chunk(type, data) {
  * @param {number} width
  * @param {number} height
  * @param {{r: number, g: number, b: number}} background
- * @returns {Buffer}
+ * @returns {Uint8Array}
  */
-export function encodeOpaquePng(rgba, width, height, background = { r: 255, g: 255, b: 255 }) {
-	// One filter byte per scanline (filter 0, "None") plus three bytes a pixel.
+export function buildOpaqueScanlines(rgba, width, height, background = { r: 255, g: 255, b: 255 }) {
 	const stride = width * 3;
-	const raw = Buffer.alloc((stride + 1) * height);
+	const raw = new Uint8Array((stride + 1) * height);
 
 	let out = 0;
 	for (let y = 0; y < height; y++) {
@@ -80,31 +100,61 @@ export function encodeOpaquePng(rgba, width, height, background = { r: 255, g: 2
 		}
 	}
 
-	const ihdr = Buffer.alloc(13);
-	ihdr.writeUInt32BE(width, 0);
-	ihdr.writeUInt32BE(height, 4);
+	return raw;
+}
+
+/**
+ * Wrap already-deflated scanlines in PNG framing as a 24-bit image.
+ *
+ * @param {Uint8Array} deflated — zlib stream of buildOpaqueScanlines output
+ * @param {number} width
+ * @param {number} height
+ * @returns {Uint8Array}
+ */
+export function assemblePng(deflated, width, height) {
+	const ihdr = new Uint8Array(13);
+	const view = new DataView(ihdr.buffer);
+	view.setUint32(0, width);
+	view.setUint32(4, height);
 	ihdr[8] = 8; // bit depth
 	ihdr[9] = 2; // colour type 2 = truecolour, no alpha
 	ihdr[10] = 0; // deflate
 	ihdr[11] = 0; // adaptive filtering
 	ihdr[12] = 0; // no interlace
 
-	return Buffer.concat([
-		Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+	return concat([
+		new Uint8Array(PNG_SIGNATURE),
 		chunk('IHDR', ihdr),
-		chunk('IDAT', deflateSync(raw, { level: 9 })),
-		chunk('IEND', Buffer.alloc(0))
+		chunk('IDAT', deflated),
+		chunk('IEND', new Uint8Array(0))
 	]);
 }
 
 /**
- * Encode a canvas as a store-safe, alpha-free PNG.
+ * Encode RGBA pixel data as a 24-bit (colour type 2) PNG, dropping alpha.
  *
- * @param {import('@napi-rs/canvas').Canvas} canvas
- * @returns {Buffer}
+ * @param {Uint8ClampedArray|Uint8Array} rgba — 4 bytes per pixel
+ * @param {number} width
+ * @param {number} height
+ * @param {{deflate: (bytes: Uint8Array) => Uint8Array | Promise<Uint8Array>,
+ *          background?: {r: number, g: number, b: number}}} options
+ * @returns {Promise<Uint8Array>}
  */
-export function canvasToStorePng(canvas) {
-	const ctx = canvas.getContext('2d');
-	const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-	return encodeOpaquePng(data, canvas.width, canvas.height);
+export async function encodeOpaquePng(rgba, width, height, { deflate, background }) {
+	const raw = buildOpaqueScanlines(rgba, width, height, background);
+	return assemblePng(await deflate(raw), width, height);
+}
+
+/** Reads width, height and colour type straight out of a PNG header. */
+export function readPngHeader(bytes) {
+	if (bytes.length < 26) return null;
+	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+	const colourType = bytes[25];
+	return {
+		width: view.getUint32(16),
+		height: view.getUint32(20),
+		colourType,
+		// Colour types 4 and 6 carry an alpha channel.
+		hasAlpha: colourType === 4 || colourType === 6
+	};
 }

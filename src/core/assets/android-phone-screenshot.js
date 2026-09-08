@@ -21,7 +21,7 @@ export default {
 		'frameless-bordered'
 	],
 	sizes: [
-		{ id: 'android-phone', label: 'Android Phone (1080x1920)', w: 1080, h: 1920, platform: 'android' }
+		{ id: 'android-phone', label: 'Android Phone (1080x1920)', w: 1080, h: 1920, platform: 'android', storeKind: 'screenshot' }
 	],
 	inputs: SCREENSHOT_INPUTS,
 	layouts: SCREENSHOT_LAYOUTS,

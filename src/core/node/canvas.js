@@ -4,8 +4,9 @@
  */
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import { getAssetType } from '../assets/index.js';
-import { canvasToStorePng } from '../png.js';
-import { validateStoreAsset, readPngHeader } from '../validate.js';
+import { canvasToStorePng } from './png.js';
+import { validateStoreAsset } from '../validate.js';
+import { readPngHeader } from '../png.js';
 
 // Track registered fonts
 const registeredFonts = new Set();
@@ -59,6 +60,17 @@ export async function registerFont(family) {
 }
 
 /**
+ * The size a config renders at: the one it names, else the asset type's first,
+ * which is the one the stores care most about (6.9" for iPhone, 13" for iPad).
+ *
+ * @param {object} module — an asset type from the registry
+ * @param {string} [sizeId]
+ */
+export function resolveSize(module, sizeId) {
+	return (sizeId && module.sizes.find((s) => s.id === sizeId)) || module.sizes[0];
+}
+
+/**
  * Render a single asset server-side.
  *
  * @param {object} config — same shape as editor config
@@ -69,12 +81,7 @@ export async function renderAsset(config, imageBuffers = {}) {
 	const module = getAssetType(config.assetType);
 	if (!module) throw new Error(`Unknown asset type: ${config.assetType}`);
 
-	// Resolve size
-	let size = module.sizes[0];
-	if (config.sizeId) {
-		const found = module.sizes.find((s) => s.id === config.sizeId);
-		if (found) size = found;
-	}
+	const size = resolveSize(module, config.sizeId);
 
 	// Register any fonts used by text overlays
 	const overlayFonts = new Set(
@@ -112,6 +119,36 @@ export async function renderAsset(config, imageBuffers = {}) {
 }
 
 /**
+ * Render one asset and check it against the rules of the store it targets.
+ *
+ * Checked against what was actually produced, not against what the config
+ * asked for, so an encoder change cannot quietly break it.
+ *
+ * @returns {Promise<{buffer: Buffer, size: object, module: object,
+ *                    problems: {level: string, message: string}[]}>}
+ */
+export async function renderStoreAsset(config, imageBuffers = {}) {
+	const module = getAssetType(config.assetType);
+	if (!module) throw new Error(`Unknown asset type: ${config.assetType}`);
+
+	const size = resolveSize(module, config.sizeId);
+	const buffer = await renderAsset(config, imageBuffers);
+	const header = readPngHeader(buffer);
+
+	const problems = header
+		? validateStoreAsset({
+				width: header.width,
+				height: header.height,
+				platform: size.platform ?? null,
+				storeKind: size.storeKind,
+				hasAlpha: header.hasAlpha
+			})
+		: [{ level: 'error', message: 'Rendered output is not a readable PNG.' }];
+
+	return { buffer, size, module, problems };
+}
+
+/**
  * Render multiple assets and return as an array of { filename, buffer } objects.
  */
 export async function renderBatch(configs, imageBuffers = {}) {
@@ -126,24 +163,10 @@ export async function renderBatch(configs, imageBuffers = {}) {
 				images[key] = imageBuffers[ref];
 			}
 		}
-		const buffer = await renderAsset(config, images);
-		const module = getAssetType(config.assetType);
-		const sizeId = config.sizeId || module?.sizes[0]?.id || 'default';
 
-		// Checked against what was actually produced, not against what the
-		// config asked for, so an encoder change cannot quietly break it.
-		const header = readPngHeader(buffer);
-		const problems = header
-			? validateStoreAsset({
-					width: header.width,
-					height: header.height,
-					platform: module?.platform ?? 'android',
-					hasAlpha: header.hasAlpha
-				})
-			: [{ level: 'error', message: 'Rendered output is not a readable PNG.' }];
-
+		const { buffer, size, problems } = await renderStoreAsset(config, images);
 		results.push({
-			filename: `${config.assetType}-${config.layout || 'default'}-${sizeId}-${i + 1}.png`,
+			filename: `${config.assetType}-${config.layout || 'default'}-${size.id}-${i + 1}.png`,
 			buffer,
 			problems
 		});

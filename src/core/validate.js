@@ -6,6 +6,12 @@
  * that produce a perfectly valid image file that a store then refuses: an
  * alpha channel, an aspect ratio outside Play's limit, a dimension Apple does
  * not recognise.
+ *
+ * Which rules apply depends on what the asset IS, not just which platform it
+ * targets: a 1024x500 Play feature graphic is 2.05:1, so the screenshot aspect
+ * limit would reject one that is in fact exactly the size Play demands. Every
+ * size in the asset registry therefore declares its `storeKind`, and only
+ * screenshots are measured as screenshots.
  */
 
 /** Screenshot sizes App Store Connect accepts, portrait and landscape. */
@@ -33,6 +39,9 @@ export const APPLE_SCREENSHOT_SIZES = [
 const PLAY_MIN_DIMENSION = 320;
 const PLAY_MAX_DIMENSION = 3840;
 
+/** Play's feature graphic has one accepted size, and it is not negotiable. */
+const FEATURE_GRAPHIC_SIZE = [1024, 500];
+
 function isAppleSize(w, h) {
 	return APPLE_SCREENSHOT_SIZES.some(
 		([pw, ph]) => (w === pw && h === ph) || (w === ph && h === pw)
@@ -40,22 +49,50 @@ function isAppleSize(w, h) {
 }
 
 /**
- * Check one rendered asset.
+ * Check one rendered asset against the rules of the store it targets.
  *
- * @param {{width: number, height: number, platform: string, hasAlpha: boolean}} asset
+ * @param {{width: number, height: number, platform: string,
+ *          hasAlpha: boolean, storeKind?: string}} asset
+ *   storeKind: 'screenshot' | 'feature-graphic' | 'icon' | 'none'.
+ *   Defaults to 'none' — an unrecognised asset is checked for the one rule
+ *   that holds everywhere rather than measured against rules it never had.
  * @returns {{level: 'error'|'warning', message: string}[]}
  */
-export function validateStoreAsset({ width, height, platform, hasAlpha }) {
+export function validateStoreAsset({ width, height, platform, hasAlpha, storeKind = 'none' }) {
 	const problems = [];
 
-	if (hasAlpha) {
+	if (hasAlpha && storeKind !== 'none') {
 		// Play: "JPEG or 24-bit PNG (no alpha)". Apple: screenshots "cannot
-		// include alpha channels or transparencies".
+		// include alpha channels or transparencies", and the same holds for
+		// the app icon.
 		problems.push({
 			level: 'error',
 			message: 'Image has an alpha channel; both stores reject that.'
 		});
 	}
+
+	if (storeKind === 'feature-graphic') {
+		const [w, h] = FEATURE_GRAPHIC_SIZE;
+		if (width !== w || height !== h) {
+			problems.push({
+				level: 'error',
+				message: `A Play feature graphic must be exactly ${w}x${h}; this is ${width}x${height}.`
+			});
+		}
+		return problems;
+	}
+
+	if (storeKind === 'icon') {
+		if (width !== height) {
+			problems.push({
+				level: 'error',
+				message: `An app icon must be square; this is ${width}x${height}.`
+			});
+		}
+		return problems;
+	}
+
+	if (storeKind !== 'screenshot') return problems;
 
 	if (platform === 'android') {
 		const min = Math.min(width, height);
@@ -92,17 +129,4 @@ export function validateStoreAsset({ width, height, platform, hasAlpha }) {
 	}
 
 	return problems;
-}
-
-/** Reads width, height and colour type straight out of a PNG header. */
-export function readPngHeader(buffer) {
-	if (buffer.length < 26) return null;
-	const colourType = buffer[25];
-	return {
-		width: buffer.readUInt32BE(16),
-		height: buffer.readUInt32BE(20),
-		colourType,
-		// Colour types 4 and 6 carry an alpha channel.
-		hasAlpha: colourType === 4 || colourType === 6
-	};
 }

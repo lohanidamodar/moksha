@@ -2,11 +2,19 @@
  * Export system for Moksha.
  * Renders queue items to full-resolution canvases and exports as
  * individual PNGs or an organized ZIP archive.
+ *
+ * Everything leaves here through canvasToStorePngBytes, never canvas.toBlob:
+ * toBlob only writes RGBA, and both stores reject an alpha channel. Each
+ * asset is then checked against the store rules by reading back the header we
+ * actually produced, so a rejectable asset is named here rather than at upload.
  */
 import JSZip from 'jszip';
 import pkg from 'file-saver';
 const { saveAs } = pkg;
 import { getAssetType } from '$core/assets/index.js';
+import { canvasToStorePngBytes } from '$core/web/png.js';
+import { readPngHeader } from '$core/png.js';
+import { validateStoreAsset } from '$core/validate.js';
 import { APP_NAME, APP_VERSION } from '$lib/config.js';
 import { transformKey } from '$lib/stores/editor.svelte.js';
 import { resolveLayout } from '$lib/layoutResolver.js';
@@ -14,30 +22,14 @@ import { resolveLayout } from '$lib/layoutResolver.js';
 const DEFAULT_TRANSFORM = { phone: { x: 0, y: 0, scale: 1, rotation: null }, logo: { x: 0, y: 0, scale: 1, rotation: null } };
 
 /**
- * Convert a canvas to a PNG Blob via a promise wrapper around toBlob.
- * @param {HTMLCanvasElement} canvas
- * @returns {Promise<Blob>}
- */
-function canvasToBlob(canvas) {
-	return new Promise((resolve, reject) => {
-		canvas.toBlob((blob) => {
-			if (blob) {
-				resolve(blob);
-			} else {
-				reject(new Error('Canvas toBlob returned null'));
-			}
-		}, 'image/png');
-	});
-}
-
-/**
- * Render a single queue item at a specific size and return the result as a Blob.
+ * Render a single queue item at a specific size, encode it store-safe, and
+ * check it against the rules of the store it targets.
  *
  * @param {object} queueItem - { id, assetType, layout, background, texts, images, thumbnail, createdAt }
  * @param {object} size - { id, label, w, h, platform }
- * @returns {Promise<Blob>}
+ * @returns {Promise<{blob: Blob, problems: {level: string, message: string}[]}>}
  */
-export async function renderToBlob(queueItem, size) {
+export async function renderStoreAsset(queueItem, size) {
 	const module = getAssetType(queueItem.assetType);
 	if (!module) {
 		throw new Error(`Unknown asset type: ${queueItem.assetType}`);
@@ -71,7 +63,19 @@ export async function renderToBlob(queueItem, size) {
 		size.h
 	);
 
-	return canvasToBlob(canvas);
+	const bytes = await canvasToStorePngBytes(canvas);
+	const header = readPngHeader(bytes);
+	const problems = header
+		? validateStoreAsset({
+				width: header.width,
+				height: header.height,
+				platform: size.platform ?? null,
+				storeKind: size.storeKind,
+				hasAlpha: header.hasAlpha
+			})
+		: [{ level: 'error', message: 'Rendered output is not a readable PNG.' }];
+
+	return { blob: new Blob([bytes], { type: 'image/png' }), problems };
 }
 
 /**
@@ -142,8 +146,12 @@ function getBaseFilename(assetTypeId, size) {
  * Generate a ZIP with organized folder structure from an array of queue items,
  * then trigger a download via file-saver.
  *
+ * Returns a report of everything that breaks a store rule, so the caller can
+ * say so instead of handing over a zip that will bounce at upload.
+ *
  * @param {object[]} queueItems - array of queue items
  * @param {function} [onProgress] - callback: (current, total, label) => void
+ * @returns {Promise<{total: number, rejected: {file: string, messages: string[]}[]}>}
  */
 export async function exportZip(queueItems, onProgress) {
 	const zip = new JSZip();
@@ -169,6 +177,9 @@ export async function exportZip(queueItems, onProgress) {
 	// Track filename counts per folder to number duplicates
 	const filenameCounts = {};
 
+	/** @type {{file: string, messages: string[]}[]} */
+	const rejected = [];
+
 	for (let i = 0; i < jobs.length; i++) {
 		const { item, size } = jobs[i];
 		const folder = getFolderPath(item.assetType, size);
@@ -185,8 +196,12 @@ export async function exportZip(queueItems, onProgress) {
 			onProgress(i + 1, total, `Rendering ${filePath}`);
 		}
 
-		const blob = await renderToBlob(item, size);
+		const { blob, problems } = await renderStoreAsset(item, size);
 		zip.file(filePath, blob);
+
+		if (problems.length) {
+			rejected.push({ file: filePath, messages: problems.map((p) => p.message) });
+		}
 
 		manifest.assets.push({
 			file: filePath,
@@ -194,7 +209,8 @@ export async function exportZip(queueItems, onProgress) {
 			platform: size.platform || null,
 			dimensions: { w: size.w, h: size.h },
 			layout: item.layout,
-			background: item.background
+			background: item.background,
+			storeRules: problems.length ? problems.map((p) => p.message) : 'pass'
 		});
 	}
 
@@ -207,12 +223,15 @@ export async function exportZip(queueItems, onProgress) {
 
 	const content = await zip.generateAsync({ type: 'blob' });
 	saveAs(content, `${APP_NAME.toLowerCase()}-assets.zip`);
+
+	return { total, rejected };
 }
 
 /**
  * Download all size variants for a single queue item as individual PNG files.
  *
  * @param {object} queueItem - a single queue item
+ * @returns {Promise<{total: number, rejected: {file: string, messages: string[]}[]}>}
  */
 export async function downloadIndividual(queueItem) {
 	const module = getAssetType(queueItem.assetType);
@@ -220,9 +239,17 @@ export async function downloadIndividual(queueItem) {
 		throw new Error(`Unknown asset type: ${queueItem.assetType}`);
 	}
 
+	/** @type {{file: string, messages: string[]}[]} */
+	const rejected = [];
+
 	for (const size of module.sizes) {
-		const blob = await renderToBlob(queueItem, size);
+		const { blob, problems } = await renderStoreAsset(queueItem, size);
 		const filename = `${queueItem.assetType}-${size.id}-${size.w}x${size.h}.png`;
+		if (problems.length) {
+			rejected.push({ file: filename, messages: problems.map((p) => p.message) });
+		}
 		saveAs(blob, filename);
 	}
+
+	return { total: module.sizes.length, rejected };
 }

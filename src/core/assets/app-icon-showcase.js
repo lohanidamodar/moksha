@@ -128,8 +128,8 @@ export default {
 	label: 'App Icon Showcase',
 	icon: '\u2b50',
 	sizes: [
-		{ id: '1024', label: '1024x1024', w: 1024, h: 1024, platform: 'general' },
-		{ id: '512', label: '512x512', w: 512, h: 512, platform: 'general' }
+		{ id: '1024', label: '1024x1024', w: 1024, h: 1024, platform: 'general', storeKind: 'icon' },
+		{ id: '512', label: '512x512', w: 512, h: 512, platform: 'general', storeKind: 'icon' }
 	],
 	inputs: [
 		{ id: 'icon', type: 'image', label: 'App Icon', placeholder: 'Upload your app icon' }

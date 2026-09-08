@@ -6,6 +6,9 @@
 
 	let exporting = $state(false);
 	let exportProgress = $state('');
+	/** @type {{file: string, messages: string[]}[]} */
+	let rejected = $state([]);
+	let exportError = $state('');
 
 	function getAssetLabel(assetTypeId) {
 		return getAssetType(assetTypeId)?.label ?? assetTypeId;
@@ -24,15 +27,31 @@
 		if (queue.count === 0 || exporting) return;
 		exporting = true;
 		exportProgress = 'Starting...';
+		rejected = [];
+		exportError = '';
 		try {
-			await exportZip(queue.items, (current, total, label) => {
+			const report = await exportZip(queue.items, (current, total, label) => {
 				exportProgress = `${current}/${total}: ${label}`;
 			});
+			rejected = report.rejected;
 		} catch (err) {
+			exportError = err instanceof Error ? err.message : String(err);
 			console.error('Export failed:', err);
 		} finally {
 			exporting = false;
 			exportProgress = '';
+		}
+	}
+
+	async function handleDownload(item) {
+		rejected = [];
+		exportError = '';
+		try {
+			const report = await downloadIndividual(item);
+			rejected = report.rejected;
+		} catch (err) {
+			exportError = err instanceof Error ? err.message : String(err);
+			console.error('Download failed:', err);
 		}
 	}
 </script>
@@ -53,6 +72,19 @@
 			</div>
 		{/if}
 	</div>
+
+	{#if exportError}
+		<p class="strip-alert error" role="alert">Export failed: {exportError}</p>
+	{:else if rejected.length}
+		<div class="strip-alert error" role="alert">
+			<strong>{rejected.length} asset{rejected.length === 1 ? '' : 's'} break a store rule:</strong>
+			<ul>
+				{#each rejected as item (item.file)}
+					<li><code>{item.file}</code> — {item.messages.join(' ')}</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
 
 	{#if queue.count > 0}
 		<div class="strip-scroll">
@@ -76,7 +108,7 @@
 						<button class="action-btn duplicate" title="Duplicate" onclick={() => queue.duplicate(item.id)}>
 							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
 						</button>
-						<button class="action-btn download" title="Download" onclick={() => downloadIndividual(item)}>
+						<button class="action-btn download" title="Download" onclick={() => handleDownload(item)}>
 							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
 						</button>
 						<button class="action-btn delete" title="Delete" onclick={() => queue.remove(item.id)}>
@@ -92,6 +124,29 @@
 </div>
 
 <style>
+	.strip-alert {
+		margin: 0;
+		padding: 8px 12px;
+		font-size: 12px;
+		line-height: 1.45;
+		border-top: 1px solid var(--border, #2e2e36);
+	}
+
+	.strip-alert.error {
+		background: rgba(220, 38, 38, 0.12);
+		color: #fca5a5;
+	}
+
+	.strip-alert ul {
+		margin: 4px 0 0;
+		padding-left: 18px;
+	}
+
+	.strip-alert code {
+		font-family: ui-monospace, monospace;
+		color: inherit;
+	}
+
 	.queue-strip {
 		border-top: 1px solid var(--border, #2e2e36);
 		background: var(--bg-surface, #1a1a1f);

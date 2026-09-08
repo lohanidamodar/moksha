@@ -105,7 +105,7 @@ export default {
 	label: 'Feature Graphic',
 	icon: '\ud83c\udfa8',
 	sizes: [
-		{ id: 'play-store', label: 'Play Store (1024x500)', w: 1024, h: 500, platform: 'android' }
+		{ id: 'play-store', label: 'Play Store (1024x500)', w: 1024, h: 500, platform: 'android', storeKind: 'feature-graphic' }
 	],
 	inputs: [
 		{ id: 'logo', type: 'image', label: 'Logo', placeholder: 'Upload your app logo' },

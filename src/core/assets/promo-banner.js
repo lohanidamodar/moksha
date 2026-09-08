@@ -99,8 +99,8 @@ export default {
 	label: 'Promo Banner',
 	icon: '\ud83d\udcf0',
 	sizes: [
-		{ id: 'play-1024x500', label: 'Play Store (1024x500)', w: 1024, h: 500, platform: 'android' },
-		{ id: 'general-1024x1024', label: 'General (1024x1024)', w: 1024, h: 1024, platform: 'general' }
+		{ id: 'play-1024x500', label: 'Play Store (1024x500)', w: 1024, h: 500, platform: 'android', storeKind: 'feature-graphic' },
+		{ id: 'general-1024x1024', label: 'General (1024x1024)', w: 1024, h: 1024, platform: 'general', storeKind: 'none' }
 	],
 	inputs: [
 		{ id: 'logo', type: 'image', label: 'Logo', placeholder: 'Upload your app logo' },

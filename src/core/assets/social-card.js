@@ -93,9 +93,9 @@ export default {
 	label: 'Social Card',
 	icon: '\ud83d\udce3',
 	sizes: [
-		{ id: 'og', label: 'Open Graph (1200x630)', w: 1200, h: 630, platform: 'web' },
-		{ id: 'twitter', label: 'Twitter (1200x675)', w: 1200, h: 675, platform: 'web' },
-		{ id: 'instagram', label: 'Instagram (1080x1080)', w: 1080, h: 1080, platform: 'web' }
+		{ id: 'og', label: 'Open Graph (1200x630)', w: 1200, h: 630, platform: 'web', storeKind: 'none' },
+		{ id: 'twitter', label: 'Twitter (1200x675)', w: 1200, h: 675, platform: 'web', storeKind: 'none' },
+		{ id: 'instagram', label: 'Instagram (1080x1080)', w: 1080, h: 1080, platform: 'web', storeKind: 'none' }
 	],
 	inputs: [
 		{ id: 'logo', type: 'image', label: 'Logo', placeholder: 'Upload your app logo' },

@@ -8,7 +8,8 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"render": "vite-node scripts/render-cli.mjs"
+		"render": "vite-node scripts/render-cli.mjs",
+		"test": "node --test \"src/core/**/*.test.js\""
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^7.0.1",

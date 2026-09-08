@@ -31,9 +31,8 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { renderAsset } from '../src/core/node/canvas.js';
+import { renderStoreAsset } from '../src/core/node/canvas.js';
 import { getAssetType, assetTypes } from '../src/core/assets/index.js';
-import { validateStoreAsset, readPngHeader } from '../src/core/validate.js';
 import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '../src/core/renderer/backgrounds.js';
 import { PHONE_FRAMES } from '../src/core/renderer/phone-frame.js';
 import { ANCHOR_IDS } from '../src/core/renderer/text-overlays.js';
@@ -117,27 +116,18 @@ for (const [index, spec] of assets.entries()) {
 		if (spec[key]) images[key] = readFileSync(resolve(imagesDir, spec[key]));
 	}
 
-	const buffer = await renderAsset(spec, images);
-	const header = readPngHeader(buffer);
-	const problems = header
-		? validateStoreAsset({
-				width: header.width,
-				height: header.height,
-				platform: module.platform,
-				hasAlpha: header.hasAlpha
-			})
-		: [{ level: 'error', message: 'Rendered output is not a readable PNG.' }];
+	const { buffer, size, problems } = await renderStoreAsset(spec, images);
 
 	const filename = spec.filename ?? `${spec.assetType}-${index + 1}.png`;
 	writeFileSync(join(outDir, filename), buffer);
 
-	const size = header ? `${header.width}x${header.height}` : 'unreadable';
+	const dimensions = `${size.w}x${size.h}`;
 	if (problems.length) {
 		failed++;
-		console.error(`✗ ${filename}  ${size}`);
+		console.error(`✗ ${filename}  ${dimensions}`);
 		for (const problem of problems) console.error(`    ${problem.message}`);
 	} else {
-		console.log(`✓ ${filename}  ${size}`);
+		console.log(`✓ ${filename}  ${dimensions}`);
 	}
 }
 
