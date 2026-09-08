@@ -1,0 +1,12 @@
+{
+  "name": "moksha",
+  "owner": { "name": "Damodar Lohani" },
+  "plugins": [
+    {
+      "name": "moksha",
+      "source": "./",
+      "description": "App Store and Google Play assets for the app in this repo — screenshots, feature graphics, banners and the preview video — captured with Patrol and checked against each store's rules.",
+      "category": "productivity"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "moksha",
+  "version": "0.1.0",
+  "description": "App Store and Google Play assets for the app in this repo — screenshots, feature graphics, banners and the preview video — captured with Patrol and checked against each store's rules.",
+  "author": { "name": "Damodar Lohani" },
+  "homepage": "https://github.com/lohanidamodar/moksha",
+  "repository": "https://github.com/lohanidamodar/moksha",
+  "license": "MIT",
+  "keywords": ["app-store", "google-play", "screenshots", "feature-graphic", "flutter", "patrol"]
+}

@@ -47,6 +47,7 @@ captures it references.
 | `moksha validate` | Check the project against the store rules, without rendering |
 | `moksha capture` | Drive the app with Patrol and photograph its screens |
 | `moksha render` | Render every asset, for every locale, and verify it |
+| `moksha preview` | Record the app preview video and check it against the store |
 | `moksha studio` | Open the editor on this project (`--port`, `--no-open`) |
 | `moksha schema` | Every legal option, as JSON |
 
@@ -93,6 +94,39 @@ gets its screenshots another way loses nothing.
 A raw capture is not an uploadable asset: a 1080x2340 phone screen is 2.17:1
 with an alpha channel, and Play refuses both. Framing it with `moksha render`
 is what makes it one.
+
+## The preview video
+
+```sh
+moksha preview --platform ios
+```
+
+Records the device while a Patrol test drives one short journey — see the main
+screen, start a core action, finish it — then transcodes to the size the store
+wants and checks it. Deliberately unframed and uncaptioned: Apple requires an
+app preview to be a plain screen recording.
+
+Apple uploads the file and enforces 15 to 30 seconds, so the test's pacing is
+the thing to adjust when it fails. Play takes a YouTube link rather than an
+upload, so the Android video is rendered for you to post yourself and no
+duration applies. Needs `ffmpeg` on the PATH.
+
+## Use it from a coding agent
+
+Moksha ships an agent skill, so the whole pipeline is one prompt from the app's
+repo:
+
+```sh
+npx skills add lohanidamodar/moksha              # Cursor, Codex, any agent
+
+/plugin marketplace add lohanidamodar/moksha     # Claude Code
+/plugin install moksha@moksha
+```
+
+Then, from the app repo: *"make store screenshots with moksha"*. The agent
+picks the screens, writes the Patrol test and the copy, renders, and opens the
+studio. Follow-ups like *"use a darker background"* or *"add Nepali"* edit the
+same file.
 
 ## The project file
 
@@ -423,4 +457,10 @@ npm run dev      # the studio, with MOKSHA_PROJECT pointing at a project
 npm test         # node's own test runner, no framework
 npm run build    # the studio, which `moksha studio` serves
 npm run vendor:fonts   # re-download assets/fonts (committed; only when the set changes)
+```
+
+Unverified here, for want of the hardware: a full `patrol` run (needs
+patrol_cli and a test in a real app repo) and the `preview` pipeline end to
+end (needs ffmpeg). The host-side capture path is verified against a real
+Android device, and every rule and command those two build on is unit-tested.
 ```

@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { capture } from './cli/capture.js';
 import { doctor } from './cli/doctor.js';
 import { init } from './cli/init.js';
+import { preview } from './cli/preview.js';
 import { render } from './cli/render.js';
 import { schema } from './cli/schema.js';
 import { studio } from './cli/studio.js';
@@ -26,6 +27,7 @@ moksha — store assets for the app in this repo
   moksha validate      Check the project against the store rules, without rendering
   moksha capture       Drive the app with Patrol and photograph its screens
   moksha render        Render every asset, for every locale, and verify it
+  moksha preview       Record the app preview video and check it against the store
   moksha studio        Open the editor on this project (--port <n>, --no-open)
   moksha schema        Every legal option, as JSON
   moksha version       Print the installed version
@@ -41,9 +43,14 @@ capture options
   --device <id>        Which attached device, when several are
   --test <path>        The Patrol test to run, overriding the project's
   --scaffold           Print the two Dart files the app repo needs, and stop
+
+preview options
+  --platform <p>       android (default) or ios
+  --test <path>        The Patrol test that drives the preview journey
+  --size <id>          iOS upload size (default ios-6.9)
 `;
 
-const COMMANDS = { init, doctor, validate, capture, render, studio, schema };
+const COMMANDS = { init, doctor, validate, capture, render, preview, studio, schema };
 
 /** A tiny flag parser: --name value, --flag, and bare positionals. */
 export function parseArgv(argv) {
