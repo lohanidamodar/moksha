@@ -1,9 +1,9 @@
 /**
  * App Icon Showcase — displays an app icon with glow, shadow, or perspective effects.
  */
-import { renderBackgroundAndPattern } from '$lib/renderer/backgrounds.js';
-import { roundRect } from '$lib/renderer/canvas.js';
-import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
+import { renderBackgroundAndPattern } from '../renderer/backgrounds.js';
+import { roundRect } from '../renderer/canvas.js';
+import { renderTextOverlays } from '../renderer/text-overlays.js';
 
 /**
  * Draws the app icon centered with layout-specific effects.

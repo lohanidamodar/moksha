@@ -1,6 +1,6 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
-	import { ALL_BACKGROUNDS } from '$lib/renderer/backgrounds.js';
+	import { ALL_BACKGROUNDS } from '$core/renderer/backgrounds.js';
 
 	let activeTab = $state('gradient');
 

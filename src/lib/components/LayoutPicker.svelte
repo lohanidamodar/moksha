@@ -1,6 +1,6 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
-	import { getAssetType } from '$lib/assets/index.js';
+	import { getAssetType } from '$core/assets/index.js';
 	import { customLayouts } from '$lib/stores/customLayouts.svelte.js';
 
 	let module = $derived(getAssetType(editor.assetType));

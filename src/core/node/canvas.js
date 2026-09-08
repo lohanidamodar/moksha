@@ -3,9 +3,9 @@
  * Provides createCanvas and loadImage that work with our render functions.
  */
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
-import { getAssetType } from '$lib/assets/index.js';
-import { canvasToStorePng } from './png.js';
-import { validateStoreAsset, readPngHeader } from './validate.js';
+import { getAssetType } from '../assets/index.js';
+import { canvasToStorePng } from '../png.js';
+import { validateStoreAsset, readPngHeader } from '../validate.js';
 
 // Track registered fonts
 const registeredFonts = new Set();

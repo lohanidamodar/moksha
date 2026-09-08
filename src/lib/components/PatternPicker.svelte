@@ -1,6 +1,6 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
-	import { PATTERNS } from '$lib/renderer/backgrounds.js';
+	import { PATTERNS } from '$core/renderer/backgrounds.js';
 
 	let currentId = $derived(editor.pattern?.id ?? null);
 

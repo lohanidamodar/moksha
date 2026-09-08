@@ -1,9 +1,9 @@
 /**
  * Promo Banner — promotional banner with logo, text, and optional phone frame.
  */
-import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
-import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
-import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
+import { renderBackgroundAndPattern, getBackgroundTone } from '../renderer/backgrounds.js';
+import { drawPhoneFrame } from '../renderer/phone-frame.js';
+import { renderTextOverlays } from '../renderer/text-overlays.js';
 
 /**
  * Returns layout positioning.

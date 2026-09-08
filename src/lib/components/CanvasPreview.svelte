@@ -1,8 +1,8 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
-	import { getAssetType } from '$lib/assets/index.js';
+	import { getAssetType } from '$core/assets/index.js';
 	import { resolveLayout } from '$lib/layoutResolver.js';
-	import { measureOverlay, hitTestOverlay } from '$lib/renderer/text-overlays.js';
+	import { measureOverlay, hitTestOverlay } from '$core/renderer/text-overlays.js';
 
 	let canvas = $state(null);
 	let container = $state(null);

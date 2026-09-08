@@ -5,9 +5,9 @@
  * Layout positions use proportional coordinates so they work for any
  * canvas dimensions.
  */
-import { renderBackgroundAndPattern, getBackgroundTone } from '$lib/renderer/backgrounds.js';
-import { drawPhoneFrame } from '$lib/renderer/phone-frame.js';
-import { renderTextOverlays } from '$lib/renderer/text-overlays.js';
+import { renderBackgroundAndPattern, getBackgroundTone } from '../renderer/backgrounds.js';
+import { drawPhoneFrame } from '../renderer/phone-frame.js';
+import { renderTextOverlays } from '../renderer/text-overlays.js';
 
 /**
  * Returns phone positioning for a given layout id.

@@ -1,7 +1,7 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
 	import { queue } from '$lib/stores/queue.svelte.js';
-	import { getAssetType } from '$lib/assets/index.js';
+	import { getAssetType } from '$core/assets/index.js';
 	import LayoutPicker from './LayoutPicker.svelte';
 	import BackgroundPicker from './BackgroundPicker.svelte';
 	import PatternPicker from './PatternPicker.svelte';
@@ -9,8 +9,8 @@
 	import ImageSelector from './ImageSelector.svelte';
 	import TransformControls from './TransformControls.svelte';
 	import TextOverlaysPanel from './TextOverlaysPanel.svelte';
-	import { PHONE_FRAMES } from '$lib/renderer/phone-frame.js';
-	import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$lib/renderer/backgrounds.js';
+	import { PHONE_FRAMES } from '$core/renderer/phone-frame.js';
+	import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$core/renderer/backgrounds.js';
 
 	let { generateThumbnail } = $props();
 

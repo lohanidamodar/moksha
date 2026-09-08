@@ -1,6 +1,6 @@
 <script>
 	import { APP_NAME } from '$lib/config.js';
-	import { assetTypes, getAssetType } from '$lib/assets/index.js';
+	import { assetTypes, getAssetType } from '$core/assets/index.js';
 	import { editor } from '$lib/stores/editor.svelte.js';
 
 	let currentModule = $derived(getAssetType(editor.assetType));

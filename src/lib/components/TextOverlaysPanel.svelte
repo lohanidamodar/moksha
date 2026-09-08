@@ -1,6 +1,6 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
-	import { ANCHOR_IDS } from '$lib/renderer/text-overlays.js';
+	import { ANCHOR_IDS } from '$core/renderer/text-overlays.js';
 	import FontSelector from './FontSelector.svelte';
 
 	let selected = $derived(editor.textOverlays.find((o) => o.id === editor.selectedOverlayId) ?? null);

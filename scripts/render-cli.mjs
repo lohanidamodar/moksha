@@ -31,12 +31,12 @@
  */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { renderAsset } from '../src/lib/renderer/server-canvas.js';
-import { getAssetType, assetTypes } from '../src/lib/assets/index.js';
-import { validateStoreAsset, readPngHeader } from '../src/lib/renderer/validate.js';
-import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '../src/lib/renderer/backgrounds.js';
-import { PHONE_FRAMES } from '../src/lib/renderer/phone-frame.js';
-import { ANCHOR_IDS } from '../src/lib/renderer/text-overlays.js';
+import { renderAsset } from '../src/core/node/canvas.js';
+import { getAssetType, assetTypes } from '../src/core/assets/index.js';
+import { validateStoreAsset, readPngHeader } from '../src/core/validate.js';
+import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '../src/core/renderer/backgrounds.js';
+import { PHONE_FRAMES } from '../src/core/renderer/phone-frame.js';
+import { ANCHOR_IDS } from '../src/core/renderer/text-overlays.js';
 
 function option(name, fallback) {
 	const i = process.argv.indexOf(name);

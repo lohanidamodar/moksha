@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { renderBatch } from '$lib/renderer/server-canvas.js';
+import { renderBatch } from '$core/node/canvas.js';
 import JSZip from 'jszip';
 
 /**

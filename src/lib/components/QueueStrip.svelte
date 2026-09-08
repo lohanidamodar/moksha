@@ -1,7 +1,7 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
 	import { queue } from '$lib/stores/queue.svelte.js';
-	import { getAssetType } from '$lib/assets/index.js';
+	import { getAssetType } from '$core/assets/index.js';
 	import { exportZip, downloadIndividual } from '$lib/renderer/export.js';
 
 	let exporting = $state(false);

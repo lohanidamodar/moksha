@@ -6,7 +6,7 @@
 import JSZip from 'jszip';
 import pkg from 'file-saver';
 const { saveAs } = pkg;
-import { getAssetType } from '$lib/assets/index.js';
+import { getAssetType } from '$core/assets/index.js';
 import { APP_NAME, APP_VERSION } from '$lib/config.js';
 import { transformKey } from '$lib/stores/editor.svelte.js';
 import { resolveLayout } from '$lib/layoutResolver.js';

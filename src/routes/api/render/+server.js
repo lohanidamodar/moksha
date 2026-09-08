@@ -1,9 +1,9 @@
 import { json } from '@sveltejs/kit';
-import { renderAsset } from '$lib/renderer/server-canvas.js';
-import { assetTypes } from '$lib/assets/index.js';
-import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$lib/renderer/backgrounds.js';
-import { PHONE_FRAMES } from '$lib/renderer/phone-frame.js';
-import { ANCHOR_IDS } from '$lib/renderer/text-overlays.js';
+import { renderAsset } from '$core/node/canvas.js';
+import { assetTypes } from '$core/assets/index.js';
+import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$core/renderer/backgrounds.js';
+import { PHONE_FRAMES } from '$core/renderer/phone-frame.js';
+import { ANCHOR_IDS } from '$core/renderer/text-overlays.js';
 
 /**
  * POST /api/render

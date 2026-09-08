@@ -76,20 +76,6 @@ export function drawText(ctx, text, x, y, options = {}) {
 }
 
 /**
- * Creates an offscreen canvas element of the given dimensions.
- * Works in browser environments.
- * @param {number} w
- * @param {number} h
- * @returns {HTMLCanvasElement}
- */
-export function createOffscreenCanvas(w, h) {
-	const canvas = document.createElement('canvas');
-	canvas.width = w;
-	canvas.height = h;
-	return canvas;
-}
-
-/**
  * Extracts an approximate line height from a CSS font string.
  * Falls back to 84 (matches the mockup's 72px * ~1.17).
  * @param {string} font
