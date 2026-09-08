@@ -2,61 +2,18 @@
  * Server-side canvas adapter using @napi-rs/canvas.
  * Provides createCanvas and loadImage that work with our render functions.
  */
-import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { getAssetType } from '../assets/index.js';
 import { canvasToStorePng } from './png.js';
 import { validateStoreAsset } from '../validate.js';
 import { readPngHeader } from '../png.js';
+import { registerFonts } from './fonts.js';
 
-// Track registered fonts
-const registeredFonts = new Set();
-
-/**
- * Register a Google Font for server-side rendering.
- * Downloads the font file and registers it with GlobalFonts.
- */
-export async function registerFont(family) {
-	if (registeredFonts.has(family)) return;
-	registeredFonts.add(family);
-
-	try {
-		const encoded = family.replace(/ /g, '+');
-		const cssUrl = `https://fonts.googleapis.com/css2?family=${encoded}:wght@400;500;600;700;800;900&display=swap`;
-
-		const cssRes = await fetch(cssUrl, {
-			headers: { 'User-Agent': 'Mozilla/5.0' } // Google Fonts requires a browser UA
-		});
-		const css = await cssRes.text();
-
-		// Google serves woff2 to browsers it recognises and ttf otherwise, and
-		// which one you get depends on the User-Agent above. Matching only
-		// woff2 meant scripts like Devanagari registered nothing at all and
-		// rendered as boxes.
-		const urls = [...css.matchAll(/url\((https:\/\/fonts\.gstatic\.com[^)]+\.(?:woff2|ttf|otf))\)/g)].map(
-			(m) => m[1]
-		);
-
-		// Every face, not just the first. A family is split across unicode-range
-		// subsets, and the first is usually Latin — so registering one face
-		// gives a font that renders English and nothing else.
-		for (const url of urls) {
-			const fontRes = await fetch(url);
-			const buffer = Buffer.from(await fontRes.arrayBuffer());
-			GlobalFonts.register(buffer, family);
-		}
-
-		// Verify rather than assume. A family that failed to register does not
-		// throw — it silently falls back, and the only symptom is boxes in the
-		// finished asset, which no exit code would catch.
-		if (!GlobalFonts.has(family)) {
-			console.warn(
-				`Font "${family}" did not register (${urls.length} face(s) tried); ` +
-					'text in this family will fall back and may render as boxes.'
-			);
-		}
-	} catch (e) {
-		console.warn(`Failed to register font "${family}":`, e.message);
-	}
+/** The families a config's text overlays ask for. */
+function overlayFonts(config) {
+	return (config.textOverlays ?? [])
+		.map((o) => o?.font)
+		.filter((f) => typeof f === 'string' && f.length > 0);
 }
 
 /**
@@ -83,13 +40,9 @@ export async function renderAsset(config, imageBuffers = {}) {
 
 	const size = resolveSize(module, config.sizeId);
 
-	// Register any fonts used by text overlays
-	const overlayFonts = new Set(
-		(config.textOverlays ?? [])
-			.map((o) => o?.font)
-			.filter((f) => typeof f === 'string' && f.length > 0)
-	);
-	await Promise.all([...overlayFonts].map((f) => registerFont(f)));
+	// Any font a text overlay names has to be registered before the draw, or it
+	// renders as boxes.
+	await registerFonts(overlayFonts(config));
 
 	// Load images from buffers
 	const images = {};
@@ -132,6 +85,9 @@ export async function renderStoreAsset(config, imageBuffers = {}) {
 	if (!module) throw new Error(`Unknown asset type: ${config.assetType}`);
 
 	const size = resolveSize(module, config.sizeId);
+	// Registration is memoised per family, so doing it here and again inside
+	// renderAsset costs nothing and keeps the failures on this call stack.
+	const fontFailures = await registerFonts(overlayFonts(config));
 	const buffer = await renderAsset(config, imageBuffers);
 	const header = readPngHeader(buffer);
 
@@ -144,6 +100,17 @@ export async function renderStoreAsset(config, imageBuffers = {}) {
 				hasAlpha: header.hasAlpha
 			})
 		: [{ level: 'error', message: 'Rendered output is not a readable PNG.' }];
+
+	// A font that did not register produces a perfectly valid PNG full of
+	// boxes, which is exactly the class of failure this check exists for.
+	for (const failure of fontFailures) {
+		problems.push({
+			level: 'error',
+			message:
+				`Font "${failure.family}" did not register, so text in it rendered ` +
+				`as boxes${failure.reason ? ` (${failure.reason})` : ''}.`
+		});
+	}
 
 	return { buffer, size, module, problems };
 }
