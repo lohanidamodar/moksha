@@ -1,6 +1,7 @@
 <script>
 	import { editor } from '$lib/stores/editor.svelte.js';
 	import { imageLibrary } from '$lib/stores/imageLibrary.svelte.js';
+	import { project } from '$lib/stores/project.svelte.js';
 
 	let { inputId } = $props();
 
@@ -13,10 +14,14 @@
 
 	function select(entry) {
 		editor.images[inputId] = entry.img;
+		// So committing the open asset records which file it uses, not just
+		// which pixels the canvas happens to be holding.
+		if (entry.ref) project.setImageRef(inputId, entry.ref);
 	}
 
 	function clear() {
 		editor.images[inputId] = null;
+		project.setImageRef(inputId, null);
 	}
 </script>
 

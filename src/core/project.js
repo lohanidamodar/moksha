@@ -196,6 +196,62 @@ export function resolveLayout(project, asset, module) {
 }
 
 /**
+ * A project trimmed for writing to disk.
+ *
+ * normalizeProject fills every field in so the rest of the code never has to
+ * check; writing all of that back turns a hand-written file into a wall of
+ * nulls and makes the next git diff unreadable. Since the file being diffable
+ * is most of the point of having one, saving trims what normalising added.
+ *
+ * `pattern` is the exception: a null there means "no pattern on this asset",
+ * which is different from inheriting the project's, so an explicit null stays.
+ */
+export function serializeProject(project) {
+	const out = {
+		version: project.version,
+		app: project.app,
+		locales: project.locales,
+		out: project.out,
+		design: trim(project.design)
+	};
+
+	if (Object.keys(project.store ?? {}).length) out.store = project.store;
+	if (Object.keys(project.capture ?? {}).length) out.capture = project.capture;
+
+	out.assets = (project.assets ?? []).map((asset) => {
+		const trimmed = trim(asset, ['pattern']);
+		if (!Object.keys(trimmed.images ?? {}).length) delete trimmed.images;
+		if (!trimmed.text?.length) delete trimmed.text;
+		return trimmed;
+	});
+
+	return out;
+}
+
+/**
+ * Drop null, undefined and empty objects.
+ *
+ * Keys in [keep] survive an explicit null — but never undefined, which means
+ * the file did not mention them at all.
+ */
+function trim(value, keep = []) {
+	const out = {};
+	for (const [key, entry] of Object.entries(value ?? {})) {
+		if (entry === undefined) continue;
+		if (keep.includes(key)) {
+			out[key] = entry;
+			continue;
+		}
+		if (entry === null || entry === undefined) continue;
+		if (typeof entry === 'object' && !Array.isArray(entry) && Object.keys(entry).length === 0) {
+			continue;
+		}
+		out[key] = entry;
+	}
+	return out;
+}
+
+/**
  * Check a project against the asset registry.
  *
  * File existence is not checked here — that needs a filesystem, and this

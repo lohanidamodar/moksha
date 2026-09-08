@@ -5,6 +5,7 @@ import { GRADIENTS, MESH, SOLIDS, PATTERNS } from '$core/renderer/backgrounds.js
 import { PHONE_FRAMES } from '$core/renderer/phone-frame.js';
 import { ANCHOR_IDS } from '$core/renderer/text-overlays.js';
 import { GOOGLE_FONTS } from '$core/fonts.js';
+import { TEMPLATES } from '$core/templates.js';
 import { currentProject, projectPath, NoProjectError } from '$lib/server/project.js';
 
 /** The project the studio is editing, plus everything it may legally contain. */
@@ -31,6 +32,11 @@ export function GET() {
 				solid: [...SOLIDS.map((s) => s.id), 'custom']
 			},
 			patterns: PATTERNS.map((p) => p.id),
+			templates: Object.values(TEMPLATES).map((t) => ({
+				id: t.id,
+				label: t.label,
+				description: t.description
+			})),
 			phoneFrames: PHONE_FRAMES.map((f) => f.id ?? f),
 			textAnchors: ANCHOR_IDS,
 			fonts: GOOGLE_FONTS.map((f) => f.family)

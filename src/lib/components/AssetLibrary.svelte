@@ -1,5 +1,6 @@
 <script>
 	import { imageLibrary } from '$lib/stores/imageLibrary.svelte.js';
+	import { project } from '$lib/stores/project.svelte.js';
 
 	let screenshotInput = $state(null);
 	let logoInput = $state(null);
@@ -7,7 +8,20 @@
 	async function handleUpload(e, category) {
 		const files = e.target.files;
 		if (!files || files.length === 0) return;
-		await imageLibrary.addFiles(files, category);
+		const entries = await imageLibrary.addFiles(files, category);
+
+		// With a project open, a picked file has to land in it: the browser
+		// holds it as a blob the CLI cannot see, so it becomes a file under
+		// captures/ and the asset references it by path.
+		if (project.project) {
+			for (const [index, entry] of entries.entries()) {
+				try {
+					imageLibrary.setRef(entry.id, await project.uploadImage(files[index]));
+				} catch (err) {
+					project.error = err instanceof Error ? err.message : String(err);
+				}
+			}
+		}
 		e.target.value = '';
 	}
 

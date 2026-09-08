@@ -44,6 +44,7 @@ export const GOOGLE_FONTS = [
 	{ family: 'DM Serif Display', category: 'serif' },
 	{ family: 'Cormorant Garamond', category: 'serif' },
 	{ family: 'Noto Serif', category: 'serif' },
+	{ family: 'Noto Sans', category: 'sans-serif' },
 	{ family: 'Source Serif 4', category: 'serif' },
 	{ family: 'Vollkorn', category: 'serif' },
 	{ family: 'Fira Code', category: 'monospace' },
@@ -60,4 +61,11 @@ export const GOOGLE_FONTS = [
 	{ family: 'Caveat', category: 'handwriting' },
 	{ family: 'Satisfy', category: 'handwriting' },
 	{ family: 'Sacramento', category: 'handwriting' },
+	// Scripts the Latin faces above have no glyphs for at all. Noto Sans
+	// Devanagari is bundled, because a Nepali listing set in Montserrat is a
+	// row of boxes and that is the failure most likely to reach a store.
+	{ family: 'Noto Sans Devanagari', category: 'devanagari' },
+	{ family: 'Noto Serif Devanagari', category: 'devanagari' },
+	{ family: 'Mukta', category: 'devanagari' },
+	{ family: 'Hind', category: 'devanagari' },
 ];

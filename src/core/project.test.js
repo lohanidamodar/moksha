@@ -9,6 +9,7 @@ import {
 	resolveAsset,
 	resolveCopy,
 	isLocalisedCopy,
+	serializeProject,
 	validateProject
 } from './project.js';
 
@@ -190,4 +191,63 @@ test('a valid two-locale project has no errors', () => {
 		}),
 		[]
 	);
+});
+
+test('saving trims what normalising added, so the file stays diffable', () => {
+	const project = normalizeProject({
+		app: { name: 'App' },
+		assets: [{ id: 'home', assetType: 'iphone-screenshot', images: { screenshot: 'a.png' } }]
+	});
+	const written = serializeProject(project);
+
+	// normalizeProject fills these in; writing them back is a wall of nulls.
+	for (const key of ['sizeId', 'layout', 'span', 'background', 'phoneFrame']) {
+		assert.ok(!(key in written.assets[0]), `${key} was written as null`);
+	}
+	// An empty text array and an empty store add nothing to the file either.
+	assert.ok(!('text' in written.assets[0]));
+	assert.ok(!('store' in written));
+	assert.ok(!('capture' in written));
+	// What was actually set survives.
+	assert.equal(written.assets[0].id, 'home');
+	assert.deepEqual(written.assets[0].images, { screenshot: 'a.png' });
+});
+
+test('an explicit "no pattern" survives a save, because it is not the same as inheriting', () => {
+	const project = normalizeProject({
+		design: { pattern: { id: 'dots' } },
+		assets: [
+			{ id: 'plain', assetType: 'feature-graphic', pattern: null },
+			{ id: 'inherits', assetType: 'feature-graphic' }
+		]
+	});
+	const written = serializeProject(project);
+	assert.equal(written.assets[0].pattern, null, 'a deliberate null was dropped');
+	assert.ok(!('pattern' in written.assets[1]), 'an absent pattern was invented');
+});
+
+test('a save keeps the store and capture blocks it was given', () => {
+	const written = serializeProject(
+		normalizeProject({
+			store: { developer: 'PopupBits' },
+			capture: { test: 'integration_test/store.dart' },
+			assets: []
+		})
+	);
+	assert.deepEqual(written.store, { developer: 'PopupBits' });
+	assert.deepEqual(written.capture, { test: 'integration_test/store.dart' });
+});
+
+test('a trimmed save reloads to the same project', () => {
+	// The round trip that matters: the studio saves, the CLI reads.
+	const original = normalizeProject({
+		app: { name: 'App' },
+		locales: ['en', 'ne'],
+		design: { template: 'panoramic', font: { en: 'Lato', ne: 'Noto Sans Devanagari' } },
+		assets: [
+			{ id: 'home', assetType: 'iphone-screenshot', layout: 'panorama', span: 2, images: { screenshot: 'a.png' } }
+		]
+	});
+	const reloaded = normalizeProject(JSON.parse(JSON.stringify(serializeProject(original))));
+	assert.deepEqual(reloaded, original);
 });

@@ -27,6 +27,12 @@ class ProjectState {
 	/** The asset currently open in the editor, by project id. */
 	openAssetId = $state(null);
 	dirty = $state(false);
+	/**
+	 * Images uploaded into the project while the open asset is being edited,
+	 * by input id. The browser holds an upload as a blob the CLI cannot see, so
+	 * it becomes a file in the project and the asset references it by path.
+	 */
+	pendingImages = $state({});
 
 	locales = $derived(this.project?.locales ?? ['en']);
 	assets = $derived(this.project?.assets ?? []);
@@ -132,11 +138,22 @@ class ProjectState {
 		editor.images = {};
 		for (const [input, ref] of Object.entries(asset.images ?? {})) {
 			if (!ref) continue;
-			const entry = await imageLibrary.addFromUrl(this.imageUrl(ref), ref, input);
+			const entry = await imageLibrary.addFromUrl(this.imageUrl(ref), ref, input, ref);
 			if (entry) editor.images[input] = entry.img;
 		}
 
 		this.openAssetId = id;
+		this.pendingImages = {};
+	}
+
+	/**
+	 * Note which file in the project an input now uses, so committing the open
+	 * asset records it. Null clears the input.
+	 */
+	setImageRef(inputId, ref) {
+		if (!this.project || !this.openAssetId) return;
+		this.pendingImages = { ...this.pendingImages, [inputId]: ref };
+		this.dirty = true;
 	}
 
 	/**
@@ -146,6 +163,7 @@ class ProjectState {
 	 * drop the Nepali ones, so a localised value keeps every other locale.
 	 */
 	commitOpenAsset(imageRefs = {}) {
+		imageRefs = { ...this.pendingImages, ...imageRefs };
 		const index = this.assets.findIndex((a) => a.id === this.openAssetId);
 		if (index === -1) return;
 		const previous = this.assets[index];
@@ -159,10 +177,80 @@ class ProjectState {
 			pattern: editor.pattern,
 			phoneFrame: editor.phoneFrame || null,
 			transforms: editor.getTransforms(editor.layout, editor.sizeId),
-			images: { ...previous.images, ...imageRefs },
+			images: prunedImages({ ...previous.images, ...imageRefs }),
 			text: editor.textOverlays.map((overlay, i) => mergeCopy(previous.text?.[i], overlay, this.locale))
 		};
 		this.dirty = true;
+	}
+
+	/**
+	 * A readable, unique id for a new asset: the asset type without its
+	 * "-screenshot" tail, numbered. The id names the output file, so it wants
+	 * to mean something.
+	 */
+	nextAssetId(assetType) {
+		const base = assetType.replace(/-screenshot$/, '').replace(/-showcase$/, '');
+		const taken = new Set(this.assets.map((a) => a.id));
+		if (!taken.has(base)) return base;
+		for (let n = 2; ; n++) {
+			if (!taken.has(`${base}-${n}`)) return `${base}-${n}`;
+		}
+	}
+
+	/** Add an asset of [assetType] and open it. */
+	async addAsset(assetType) {
+		if (!this.project) return null;
+		const id = this.nextAssetId(assetType);
+		this.project.assets = [...this.assets, { id, assetType, images: {}, text: [] }];
+		this.dirty = true;
+		await this.openAsset(id);
+		return id;
+	}
+
+	/** Copy an asset, so a second tile starts from one that already works. */
+	async duplicateAsset(id) {
+		const index = this.assets.findIndex((a) => a.id === id);
+		if (index === -1) return null;
+		const copy = structuredClone($state.snapshot(this.assets[index]));
+		copy.id = this.nextAssetId(copy.assetType);
+		const assets = [...this.assets];
+		assets.splice(index + 1, 0, copy);
+		this.project.assets = assets;
+		this.dirty = true;
+		await this.openAsset(copy.id);
+		return copy.id;
+	}
+
+	removeAsset(id) {
+		this.project.assets = this.assets.filter((a) => a.id !== id);
+		this.dirty = true;
+		if (this.openAssetId === id) this.openAssetId = null;
+	}
+
+	/** Move an asset within its strip. Order is store order, so it is meaningful. */
+	moveAsset(id, delta) {
+		const from = this.assets.findIndex((a) => a.id === id);
+		const to = from + delta;
+		if (from === -1 || to < 0 || to >= this.assets.length) return;
+		const assets = [...this.assets];
+		const [moved] = assets.splice(from, 1);
+		assets.splice(to, 0, moved);
+		this.project.assets = assets;
+		this.dirty = true;
+	}
+
+	/** Rename an asset, which renames the file it renders to. */
+	renameAsset(id, next) {
+		const clean = String(next).trim().replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^[.-]+/, '');
+		if (!clean || clean === id) return id;
+		if (this.assets.some((a) => a.id === clean)) {
+			this.error = `There is already an asset called "${clean}".`;
+			return id;
+		}
+		this.project.assets = this.assets.map((a) => (a.id === id ? { ...a, id: clean } : a));
+		if (this.openAssetId === id) this.openAssetId = clean;
+		this.dirty = true;
+		return clean;
 	}
 
 	/** Change the project-wide design, which every asset inherits. */
@@ -176,6 +264,11 @@ class ProjectState {
 		this.locale = locale;
 		if (this.openAssetId) await this.openAsset(this.openAssetId);
 	}
+}
+
+/** Inputs cleared in the editor are dropped rather than left pointing at the old file. */
+function prunedImages(images) {
+	return Object.fromEntries(Object.entries(images).filter(([, ref]) => ref));
 }
 
 /**

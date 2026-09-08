@@ -11,6 +11,7 @@ import {
 	PROJECT_DIRNAME,
 	PROJECT_FILENAME,
 	normalizeProject,
+	serializeProject,
 	validateProject,
 	emptyProject
 } from '../project.js';
@@ -111,7 +112,7 @@ export function outputDir(projectDir, project) {
 export function saveProject(path, project) {
 	const absolute = resolve(path);
 	mkdirSync(dirname(absolute), { recursive: true });
-	writeFileSync(absolute, `${JSON.stringify(project, null, '\t')}\n`);
+	writeFileSync(absolute, `${JSON.stringify(serializeProject(project), null, '\t')}\n`);
 	return absolute;
 }
 

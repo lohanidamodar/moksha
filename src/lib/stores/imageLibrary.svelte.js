@@ -17,10 +17,22 @@ class ImageLibraryState {
 			const entry = await this._loadFile(file, category);
 			if (entry) {
 				this.items.push(entry);
-				results.push({ id: entry.id, img: entry.img });
+				results.push(entry);
 			}
 		}
 		return results;
+	}
+
+	/**
+	 * Record where an entry lives in the project.
+	 *
+	 * A picked file is a blob the browser owns and the CLI cannot see; once it
+	 * has been written into the project, the entry carries the path so
+	 * selecting it can put that path in the asset.
+	 */
+	setRef(id, ref) {
+		const item = this.items.find((i) => i.id === id);
+		if (item) item.ref = ref;
 	}
 
 	/**
@@ -33,7 +45,7 @@ class ImageLibraryState {
 	 * @param {string} name
 	 * @param {string} category
 	 */
-	async addFromUrl(url, name, category) {
+	async addFromUrl(url, name, category, ref = name) {
 		const existing = this.items.find((i) => i.src === url);
 		if (existing) return existing;
 
@@ -45,7 +57,8 @@ class ImageLibraryState {
 					name,
 					src: url,
 					img,
-					category
+					category,
+					ref
 				});
 			img.onerror = () => resolve(null);
 			img.src = url;
